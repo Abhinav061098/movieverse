@@ -1,0 +1,584 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:movieverse/core/api/api_client.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
+import '../../models/tv_show_details.dart';
+import '../../models/season.dart';
+import '../../models/credits.dart';
+import '../../services/tv_service.dart';
+import '../../services/favorites_service.dart';
+import 'package:movieverse/core/mixins/analytics_mixin.dart';
+
+class TvShowDetailsScreen extends StatefulWidget {
+  final int tvShowId;
+
+  const TvShowDetailsScreen({Key? key, required this.tvShowId})
+      : super(key: key);
+
+  @override
+  State<TvShowDetailsScreen> createState() => _TvShowDetailsScreenState();
+}
+
+class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
+    with AnalyticsMixin {
+  late Future<TvShowDetails> _tvShowDetailsFuture;
+  late Future<Map<String, dynamic>> _watchProvidersFuture;
+  Future<Season>? _selectedSeasonFuture;
+  final TvService _tvService = TvService(ApiClient());
+  int _selectedSeasonNumber = 1;
+  bool _isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tvShowDetailsFuture = _tvService.fetchTvShowDetails(widget.tvShowId);
+    _watchProvidersFuture = _tvService.getWatchProviders(widget.tvShowId);
+    _loadSelectedSeason();
+  }
+
+  void _loadSelectedSeason() {
+    _selectedSeasonFuture = _tvService.fetchSeasonDetails(
+      widget.tvShowId,
+      _selectedSeasonNumber,
+    );
+
+    logEvent('select_season', {
+      'tv_show_id': widget.tvShowId,
+      'season_number': _selectedSeasonNumber,
+    });
+
+    setState(() {});
+  }
+
+  Future<void> _launchTrailer(TvShowDetails show) async {
+    if (show.trailers.isEmpty) return;
+
+    logEvent('watch_trailer', {
+      'content_type': 'tv_show',
+      'tv_show_id': widget.tvShowId,
+      'tv_show_title': show.title,
+    });
+
+    final trailer = show.trailers.first;
+    final url = 'https://www.youtube.com/watch?v=${trailer.videoId}';
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _launchUrl(String url) async {
+    logEvent('open_watch_provider', {
+      'content_type': 'tv_show',
+      'tv_show_id': widget.tvShowId,
+      'url': url,
+    });
+
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Widget _buildCreditsSection(List<CrewMember> crew) {
+    if (crew.isEmpty) {
+      return const Text('No crew information available');
+    }
+
+    // Find director with fallbacks
+    final director = crew.firstWhere(
+      (member) =>
+          member.job.toLowerCase() == 'director' ||
+          member.job.toLowerCase() == 'series director',
+      orElse: () => crew.firstWhere(
+        (member) => member.department.toLowerCase() == 'directing',
+        orElse: () => crew.firstWhere(
+          (member) => member.department.toLowerCase() == 'production',
+          orElse: () => crew.first,
+        ),
+      ),
+    );
+
+    // Find writers
+    final writers = crew
+        .where(
+          (member) =>
+              member.department.toLowerCase() == 'writing' ||
+              member.job.toLowerCase().contains('writer'),
+        )
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildCreditRow('Director/Creator', director.name),
+        if (writers.isNotEmpty)
+          _buildCreditRow('Writers', writers.map((w) => w.name).join(', ')),
+      ],
+    );
+  }
+
+  Widget _buildCreditRow(String role, String name) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              role,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              name,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCastCard(CastMember castMember) {
+    return Container(
+      width: 120,
+      margin: const EdgeInsets.only(right: 12),
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: CachedNetworkImage(
+              imageUrl: castMember.fullProfilePath,
+              height: 120,
+              width: 120,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                color: Colors.grey[850],
+                child: const Icon(Icons.person, size: 40),
+              ),
+              errorWidget: (context, url, error) => Container(
+                color: Colors.grey[850],
+                child: const Icon(Icons.person, size: 40),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            castMember.name,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            castMember.character,
+            style: TextStyle(color: Colors.grey[400], fontSize: 12),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: FutureBuilder<TvShowDetails>(
+        future: _tvShowDetailsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final show = snapshot.data!;
+
+          return CustomScrollView(
+            slivers: [
+              // Poster and Basic Info
+              SliverAppBar(
+                expandedHeight: MediaQuery.of(context).size.height * 0.6,
+                pinned: true,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CachedNetworkImage(
+                        imageUrl: show.fullPosterPath,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: Colors.black,
+                          child:
+                              const Center(child: CircularProgressIndicator()),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: Colors.black,
+                          child: const Icon(Icons.error),
+                        ),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withOpacity(0.8),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: MediaQuery.of(context).padding.top + 16,
+                        right: 16,
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black87,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.star,
+                                    color: show.voteAverage >= 7
+                                        ? Colors.yellow
+                                        : Colors.white,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    show.voteAverage.toStringAsFixed(1),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        show.title,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Genre and First Air Date
+                      Row(
+                        children: [
+                          Text(
+                            show.genres.map((g) => g.name).join(', '),
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text('•'),
+                          const SizedBox(width: 8),
+                          Text(show.firstAirDate),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Overview
+                      Text(
+                        'Overview',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(show.overview),
+                      const SizedBox(height: 16),
+
+                      // Watch Buttons Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          if (show.trailers.isNotEmpty)
+                            ElevatedButton.icon(
+                              onPressed: () => _launchTrailer(show),
+                              icon: const Icon(Icons.play_arrow),
+                              label: const Text('Watch Trailer'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                              ),
+                            ),
+                          const SizedBox(width: 12),
+                          FutureBuilder<Map<String, dynamic>>(
+                            future: _watchProvidersFuture,
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
+
+                              final providers = snapshot.data!;
+                              String? watchLink = providers['link']?.toString();
+
+                              if (watchLink == null)
+                                return const SizedBox.shrink();
+
+                              return ElevatedButton.icon(
+                                onPressed: () => _launchUrl(watchLink),
+                                icon: const Icon(Icons.tv),
+                                label: const Text('Watch'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(25),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Credits Section
+                      Text(
+                        'Credits',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildCreditsSection(show.credits.crew),
+                      const SizedBox(height: 24),
+
+                      // Seasons Dropdown
+                      Row(
+                        children: [
+                          Text(
+                            'Seasons',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(width: 16),
+                          DropdownButton<int>(
+                            value: _selectedSeasonNumber,
+                            items: List.generate(
+                              show.numberOfSeasons,
+                              (index) => DropdownMenuItem(
+                                value: index + 1,
+                                child: Text('Season ${index + 1}'),
+                              ),
+                            ),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _selectedSeasonNumber = value;
+                                  _loadSelectedSeason();
+                                });
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Episodes
+                      FutureBuilder<Season>(
+                        future: _selectedSeasonFuture,
+                        builder: (context, seasonSnapshot) {
+                          if (seasonSnapshot.hasError) {
+                            return Text('Error: ${seasonSnapshot.error}');
+                          }
+
+                          if (!seasonSnapshot.hasData) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+
+                          final season = seasonSnapshot.data!;
+                          if (season.episodes == null ||
+                              season.episodes!.isEmpty) {
+                            return const Text('No episodes available.');
+                          }
+
+                          return SizedBox(
+                            height: 200,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: season.episodes!.length,
+                              itemBuilder: (context, index) {
+                                final episode = season.episodes![index];
+                                return Container(
+                                  width: 300,
+                                  margin: const EdgeInsets.only(right: 16),
+                                  child: Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: CachedNetworkImage(
+                                          imageUrl: episode.fullStillPath,
+                                          height: 200,
+                                          width: 300,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) =>
+                                              Container(
+                                            color: Colors.grey[850],
+                                            child: const Center(
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            ),
+                                          ),
+                                          errorWidget: (context, url, error) =>
+                                              Container(
+                                            color: Colors.grey[850],
+                                            child: const Icon(
+                                              Icons.error,
+                                              size: 40,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Colors.transparent,
+                                              Colors.black.withOpacity(0.7),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 8,
+                                        right: 8,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black87,
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            episode.voteAverage.toStringAsFixed(
+                                              1,
+                                            ),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 8,
+                                        left: 8,
+                                        right: 8,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Episode ${episode.episodeNumber}',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.white70,
+                                              ),
+                                            ),
+                                            Text(
+                                              episode.name,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              episode.overview,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.white70,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Cast',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 180,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: show.credits.cast.length,
+                          itemBuilder: (context, index) {
+                            final castMember = show.credits.cast[index];
+                            return _buildCastCard(castMember);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}

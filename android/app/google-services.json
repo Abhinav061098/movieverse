@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "300238429893",
+    "firebase_url": "https://movieverse-bd77e-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "movieverse-bd77e",
+    "storage_bucket": "movieverse-bd77e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:300238429893:android:695a0c49fb065bfd975aac",
+        "android_client_info": {
+          "package_name": "com.example.beetroot"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdMzpQ7zY73T35i2Yy1wraDkWF0utSYwU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:300238429893:android:6ad183edb4443c10975aac",
+        "android_client_info": {
+          "package_name": "com.example.movieverse"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdMzpQ7zY73T35i2Yy1wraDkWF0utSYwU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:300238429893:android:1de98a3eba7e969a975aac",
+        "android_client_info": {
+          "package_name": "com.example.new_movieverse"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdMzpQ7zY73T35i2Yy1wraDkWF0utSYwU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

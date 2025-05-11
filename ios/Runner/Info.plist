@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyCvHpoUR738kUO0M3PJjAzzxKpxygsnsYQ</string>
+	<key>GCM_SENDER_ID</key>
+	<string>300238429893</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.beetroot</string>
+	<key>PROJECT_ID</key>
+	<string>movieverse-bd77e</string>
+	<key>STORAGE_BUCKET</key>
+	<string>movieverse-bd77e.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:300238429893:ios:2f418455f09e1b9f975aac</string>
+	<key>DATABASE_URL</key>
+	<string>https://movieverse-bd77e-default-rtdb.asia-southeast1.firebasedatabase.app</string>
+</dict>
+</plist>
