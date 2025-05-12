@@ -33,22 +33,26 @@ class FavoritesService extends ChangeNotifier {
   static const int _maxRetries = 3;
   static const Duration _retryDelay = Duration(seconds: 1);
 
-  static Future<FavoritesService> create() async {
-    final service = FavoritesService();
-    await service._initialize();
-    return service;
+  FavoritesService() {
+    _initialize();
   }
-
-  Future<void> _initialize() async {
+  void _initialize() {
     if (_isDisposed) return;
 
     try {
       debugPrint('FavoritesService: Initializing...');
-      await _database.keepSynced(true);
+      _database.keepSynced(true);
 
-      debugPrint(
-          'FavoritesService: Current user at init: ${_auth.currentUser?.uid}');
+      final currentUser = _auth.currentUser;
+      debugPrint('FavoritesService: Current user at init: ${currentUser?.uid}');
 
+      // Load favorites immediately if user is already logged in
+      if (currentUser != null) {
+        _loadFavorites();
+        _setupRealtimeSync();
+      }
+
+      // Set up auth state listener for future changes
       _authSub = _auth.authStateChanges().listen((user) {
         if (_isDisposed) return;
 

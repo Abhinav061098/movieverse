@@ -52,12 +52,12 @@ class AppRoot extends StatelessWidget {
     final tvService = TvService(apiClient);
 
     return MultiProvider(
-      providers: [
-        Provider<FirebaseService>.value(value: firebaseService),
+      providers: [        Provider<FirebaseService>.value(value: firebaseService),
         StreamProvider<User?>(
           initialData: null,
           create: (_) => FirebaseAuth.instance.authStateChanges(),
-        ),        ChangeNotifierProvider(
+        ),
+        ChangeNotifierProvider(
           create: (_) => MovieViewModel(movieService),
         ),
         ChangeNotifierProvider(
