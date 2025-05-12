@@ -6,8 +6,7 @@ class MediaGrid extends StatelessWidget {
   final List<MediaItem> items;
   final void Function(MediaItem media) onTap;
 
-  const MediaGrid({Key? key, required this.items, required this.onTap})
-      : super(key: key);
+  const MediaGrid({super.key, required this.items, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

@@ -13,7 +13,7 @@ import '../../services/favorites_service.dart';
 class MovieDetailsScreen extends StatefulWidget {
   final int movieId;
 
-  const MovieDetailsScreen({Key? key, required this.movieId}) : super(key: key);
+  const MovieDetailsScreen({super.key, required this.movieId});
 
   @override
   State<MovieDetailsScreen> createState() => _MovieDetailsScreenState();
@@ -25,7 +25,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
   late Future<String?> _certificationFuture;
   late Future<Map<String, dynamic>> _watchProvidersFuture;
   final MovieService _movieService = MovieService(ApiClient());
-  bool _isFavorite = false;
+  final bool _isFavorite = false;
 
   @override
   void initState() {
@@ -61,6 +61,80 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  Widget _buildFavoriteButton() {
+    final favoritesService = context.read<FavoritesService>();
+    return StreamBuilder<List<dynamic>>(
+      stream: favoritesService.favoritesStream,
+      initialData: const [],
+      builder: (context, snapshot) {
+        final isFavorite = favoritesService.isMovieFavorite(widget.movieId);
+        return IconButton(
+          icon: Icon(
+            isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: isFavorite ? Colors.red : Colors.white,
+          ),
+          onPressed: () async {
+            try {
+              final movieDetails = await _movieDetailsFuture;
+              final success = await favoritesService.toggleMovieFavorite(
+                widget.movieId,
+                details: movieDetails,
+              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(success
+                        ? 'Added to favorites'
+                        : 'Removed from favorites'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            }
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildFavoriteAndWatchlistButtons(MovieDetails movie) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Hero(
+          tag: 'favorite_button_movie_${widget.movieId}',
+          child: CircleAvatar(
+            backgroundColor: Colors.black54,
+            child: _buildFavoriteButton(),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Hero(
+          tag: 'watchlist_button_movie_${widget.movieId}',
+          child: CircleAvatar(
+            backgroundColor: Colors.black54,
+            child: IconButton(
+              icon: const Icon(Icons.playlist_add),
+              onPressed: () {
+                // Add your watchlist logic here
+              },
+              tooltip: 'Add to Watchlist',
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -117,7 +191,8 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                       Positioned(
                         top: MediaQuery.of(context).padding.top + 16,
                         right: 16,
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -149,6 +224,8 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                                 ],
                               ),
                             ),
+                            const SizedBox(height: 8),
+                            _buildFavoriteAndWatchlistButtons(movie),
                           ],
                         ),
                       ),
@@ -257,8 +334,9 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                               final providers = snapshot.data!;
                               String? watchLink = providers['link']?.toString();
 
-                              if (watchLink == null)
+                              if (watchLink == null) {
                                 return const SizedBox.shrink();
+                              }
 
                               return ElevatedButton.icon(
                                 onPressed: () => _launchUrl(watchLink),

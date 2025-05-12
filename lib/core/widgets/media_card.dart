@@ -7,9 +7,8 @@ class MediaCard extends StatelessWidget {
   final dynamic media; // Can be either Movie or TvShow
   final VoidCallback onTap;
 
-  const MediaCard({Key? key, required this.media, required this.onTap})
-    : assert(media is Movie || media is TvShow),
-      super(key: key);
+  const MediaCard({super.key, required this.media, required this.onTap})
+      : assert(media is Movie || media is TvShow);
 
   @override
   Widget build(BuildContext context) {
@@ -39,22 +38,20 @@ class MediaCard extends StatelessWidget {
                 child: CachedNetworkImage(
                   imageUrl: posterPath,
                   fit: BoxFit.cover,
-                  placeholder:
-                      (context, url) => Container(
-                        color: Colors.grey[900],
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white54,
-                            ),
-                          ),
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey[900],
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.white54,
                         ),
                       ),
-                  errorWidget:
-                      (context, url, error) => Container(
-                        color: Colors.grey[900],
-                        child: const Icon(Icons.error, color: Colors.white54),
-                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.grey[900],
+                    child: const Icon(Icons.error, color: Colors.white54),
+                  ),
                 ),
               ),
             ),
@@ -81,10 +78,9 @@ class MediaCard extends StatelessWidget {
                     Icon(
                       Icons.star_rounded,
                       size: 16,
-                      color:
-                          rating >= 7
-                              ? Colors.amber
-                              : rating >= 5
+                      color: rating >= 7
+                          ? Colors.amber
+                          : rating >= 5
                               ? Colors.orange
                               : Colors.grey,
                     ),

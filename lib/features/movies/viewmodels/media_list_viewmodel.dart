@@ -189,8 +189,11 @@ class MediaListViewModel with ChangeNotifier {
   }
 
   Future<void> loadMoreSearchResults() async {
-    if (!_hasMoreSearchResults || _isLoadingMoreSearch || _searchQuery.isEmpty)
+    if (!_hasMoreSearchResults ||
+        _isLoadingMoreSearch ||
+        _searchQuery.isEmpty) {
       return;
+    }
 
     _isLoadingMoreSearch = true;
     notifyListeners();

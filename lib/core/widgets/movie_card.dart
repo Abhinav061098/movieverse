@@ -6,8 +6,7 @@ class MovieCard extends StatelessWidget {
   final Movie movie;
   final VoidCallback onTap;
 
-  const MovieCard({Key? key, required this.movie, required this.onTap})
-    : super(key: key);
+  const MovieCard({super.key, required this.movie, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -26,22 +25,20 @@ class MovieCard extends StatelessWidget {
                 child: CachedNetworkImage(
                   imageUrl: movie.fullPosterPath,
                   fit: BoxFit.cover,
-                  placeholder:
-                      (context, url) => Container(
-                        color: Colors.grey[900],
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white54,
-                            ),
-                          ),
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey[900],
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.white54,
                         ),
                       ),
-                  errorWidget:
-                      (context, url, error) => Container(
-                        color: Colors.grey[900],
-                        child: const Icon(Icons.error, color: Colors.white54),
-                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.grey[900],
+                    child: const Icon(Icons.error, color: Colors.white54),
+                  ),
                 ),
               ),
             ),
@@ -68,10 +65,9 @@ class MovieCard extends StatelessWidget {
                     Icon(
                       Icons.star_rounded,
                       size: 16,
-                      color:
-                          movie.voteAverage >= 7
-                              ? Colors.amber
-                              : movie.voteAverage >= 5
+                      color: movie.voteAverage >= 7
+                          ? Colors.amber
+                          : movie.voteAverage >= 5
                               ? Colors.orange
                               : Colors.grey,
                     ),

@@ -5,7 +5,7 @@ import '../viewmodels/movie_view_model.dart';
 import '../viewmodels/tv_show_view_model.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({Key? key}) : super(key: key);
+  const SearchScreen({super.key});
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();

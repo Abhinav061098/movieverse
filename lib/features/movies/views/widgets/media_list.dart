@@ -8,11 +8,11 @@ class MediaList extends StatelessWidget {
   final void Function(MediaItem) onTap;
 
   const MediaList({
-    Key? key,
+    super.key,
     required this.title,
     required this.items,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

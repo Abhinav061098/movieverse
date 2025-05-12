@@ -7,12 +7,12 @@ class CustomSearchBar extends StatefulWidget {
   final VoidCallback onClearHistory;
 
   const CustomSearchBar({
-    Key? key,
+    super.key,
     required this.onSearch,
     required this.onClear,
     required this.searchHistory,
     required this.onClearHistory,
-  }) : super(key: key);
+  });
 
   @override
   State<CustomSearchBar> createState() => _CustomSearchBarState();
@@ -74,16 +74,15 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
           ),
           Wrap(
             spacing: 8.0,
-            children:
-                widget.searchHistory.map((term) {
-                  return Chip(
-                    label: Text(term),
-                    onDeleted: () {
-                      _controller.text = term;
-                      widget.onSearch(term);
-                    },
-                  );
-                }).toList(),
+            children: widget.searchHistory.map((term) {
+              return Chip(
+                label: Text(term),
+                onDeleted: () {
+                  _controller.text = term;
+                  widget.onSearch(term);
+                },
+              );
+            }).toList(),
           ),
         ],
       ],

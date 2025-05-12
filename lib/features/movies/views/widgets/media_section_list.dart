@@ -11,13 +11,13 @@ class MediaSectionList extends StatelessWidget {
   final void Function(dynamic media)? onMediaTap;
 
   const MediaSectionList({
-    Key? key,
+    super.key,
     required this.title,
     required this.mediaList,
     this.onLoadMore,
     this.isLoadingMore = false,
     this.onMediaTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

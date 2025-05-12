@@ -1,0 +1,49 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "profile": {
+          ".validate": "newData.hasChildren(['name', 'email'])",
+          "name": { ".validate": "newData.isString() && newData.val().length > 0" },
+          "email": { ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/)" }
+        }
+      }
+    },
+    "favorites": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "movies": {
+          "$movieId": {
+            ".validate": "newData.hasChildren(['id', 'title', 'mediaType'])",
+            "id": { ".validate": "newData.isNumber() && newData.val() > 0" },
+            "title": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "mediaType": { ".validate": "newData.isString() && newData.val() === 'movie'" },
+            "genreIds": { 
+              ".validate": "newData.hasChildren() && newData.val() != null",
+              "$index": {
+                ".validate": "newData.isNumber() && newData.val() > 0"
+              }
+            }
+          }
+        },
+        "tv_shows": {
+          "$showId": {
+            ".validate": "newData.hasChildren(['id', 'name', 'mediaType'])",
+            "id": { ".validate": "newData.isNumber() && newData.val() > 0" },
+            "name": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "mediaType": { ".validate": "newData.isString() && newData.val() === 'tv'" },
+            "genreIds": {
+              ".validate": "newData.hasChildren() && newData.val() != null",
+              "$index": {
+                ".validate": "newData.isNumber() && newData.val() > 0"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -7,11 +7,11 @@ class GenreChips extends StatelessWidget {
   final Function(int?) onGenreSelected;
 
   const GenreChips({
-    Key? key,
+    super.key,
     required this.genres,
     required this.selectedGenreId,
     required this.onGenreSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

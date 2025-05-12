@@ -13,8 +13,7 @@ import 'package:movieverse/core/mixins/analytics_mixin.dart';
 class TvShowDetailsScreen extends StatefulWidget {
   final int tvShowId;
 
-  const TvShowDetailsScreen({Key? key, required this.tvShowId})
-      : super(key: key);
+  const TvShowDetailsScreen({super.key, required this.tvShowId});
 
   @override
   State<TvShowDetailsScreen> createState() => _TvShowDetailsScreenState();
@@ -27,7 +26,7 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
   Future<Season>? _selectedSeasonFuture;
   final TvService _tvService = TvService(ApiClient());
   int _selectedSeasonNumber = 1;
-  bool _isFavorite = false;
+  final bool _isFavorite = false;
 
   @override
   void initState() {
@@ -187,6 +186,80 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
     );
   }
 
+  Widget _buildFavoriteButton() {
+    final favoritesService = context.read<FavoritesService>();
+    return StreamBuilder<List<dynamic>>(
+      stream: favoritesService.favoritesStream,
+      initialData: const [],
+      builder: (context, snapshot) {
+        final isFavorite = favoritesService.isTvShowFavorite(widget.tvShowId);
+        return IconButton(
+          icon: Icon(
+            isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: isFavorite ? Colors.red : Colors.white,
+          ),
+          onPressed: () async {
+            try {
+              final tvShowDetails = await _tvShowDetailsFuture;
+              final success = await favoritesService.toggleTvShowFavorite(
+                widget.tvShowId,
+                details: tvShowDetails,
+              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(success
+                        ? 'Added to favorites'
+                        : 'Removed from favorites'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error updating favorites: $e'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            }
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildFavoriteAndWatchlistButtons(TvShowDetails show) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Hero(
+          tag: 'favorite_button_tv_${widget.tvShowId}',
+          child: CircleAvatar(
+            backgroundColor: Colors.black54,
+            child: _buildFavoriteButton(),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Hero(
+          tag: 'watchlist_button_tv_${widget.tvShowId}',
+          child: CircleAvatar(
+            backgroundColor: Colors.black54,
+            child: IconButton(
+              icon: const Icon(Icons.playlist_add),
+              onPressed: () {
+                // Add your watchlist logic here
+              },
+              tooltip: 'Add to Watchlist',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -241,7 +314,8 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
                       Positioned(
                         top: MediaQuery.of(context).padding.top + 16,
                         right: 16,
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -273,6 +347,8 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
                                 ],
                               ),
                             ),
+                            const SizedBox(height: 8),
+                            _buildFavoriteAndWatchlistButtons(show),
                           ],
                         ),
                       ),
@@ -351,8 +427,9 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
                               final providers = snapshot.data!;
                               String? watchLink = providers['link']?.toString();
 
-                              if (watchLink == null)
+                              if (watchLink == null) {
                                 return const SizedBox.shrink();
+                              }
 
                               return ElevatedButton.icon(
                                 onPressed: () => _launchUrl(watchLink),

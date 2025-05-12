@@ -6,7 +6,7 @@ import '../../models/movie_trailer.dart';
 class TrailerCarousel extends StatefulWidget {
   final List<MovieTrailer> trailers;
 
-  const TrailerCarousel({Key? key, required this.trailers}) : super(key: key);
+  const TrailerCarousel({super.key, required this.trailers});
 
   @override
   State<TrailerCarousel> createState() => _TrailerCarouselState();
@@ -128,21 +128,19 @@ class _TrailerCarouselState extends State<TrailerCarousel> {
                           imageUrl:
                               'https://img.youtube.com/vi/${trailer.videoId}/maxresdefault.jpg',
                           fit: BoxFit.cover,
-                          placeholder:
-                              (context, url) => Container(
-                                color: Colors.black,
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                          errorWidget:
-                              (context, url, error) => Container(
-                                color: Colors.black54,
-                                child: const Icon(
-                                  Icons.error,
-                                  color: Colors.white,
-                                ),
-                              ),
+                          placeholder: (context, url) => Container(
+                            color: Colors.black,
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.black54,
+                            child: const Icon(
+                              Icons.error,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                         // YouTube Player
                         if (isActive && _activeController != null)

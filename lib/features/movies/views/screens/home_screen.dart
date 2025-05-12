@@ -8,9 +8,11 @@ import '../widgets/genre_chips.dart';
 import '../screens/movie_details_screen.dart';
 import '../screens/tv_show_details_screen.dart';
 import '../widgets/trailer_carousel.dart';
+import '../screens/favorites_screen.dart';
+import '../../../../core/auth/screens/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -46,7 +48,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(movieViewModel.error),
+                  Text(
+                    'Movie Error: \\n${movieViewModel.error}\n\nTV Show Error: \\n${tvShowViewModel.error}',
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
@@ -64,10 +70,26 @@ class _HomeScreenState extends State<HomeScreen> {
         return Scaffold(
           appBar: AppBar(
             title: const Text('MovieVerse'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.account_circle),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ProfileScreen(),
+                    ),
+                  );
+                },
+                tooltip: 'Profile',
+              ),
+            ],
           ),
           body: _currentIndex == 0
               ? _buildMoviesTab(movieViewModel)
-              : _buildTvShowsTab(tvShowViewModel),
+              : _currentIndex == 1
+                  ? _buildTvShowsTab(tvShowViewModel)
+                  : _buildFavoritesTab(),
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _currentIndex,
             onTap: (index) {
@@ -78,6 +100,8 @@ class _HomeScreenState extends State<HomeScreen> {
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.movie), label: 'Movies'),
               BottomNavigationBarItem(icon: Icon(Icons.tv), label: 'TV Shows'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.favorite), label: 'Favorites'),
             ],
           ),
         );
@@ -240,5 +264,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildFavoritesTab() {
+    return const FavoritesScreen();
   }
 }
