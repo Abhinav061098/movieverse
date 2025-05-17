@@ -7,15 +7,17 @@ import 'core/services/firebase_service.dart';
 import 'features/movies/services/movie_service.dart';
 import 'features/movies/services/tv_service.dart';
 import 'features/movies/services/favorites_service.dart';
+import 'features/movies/services/watchlist_service.dart';
 import 'features/movies/viewmodels/movie_view_model.dart';
 import 'features/movies/viewmodels/tv_show_view_model.dart';
 import 'features/movies/views/screens/home_screen.dart';
 import 'core/auth/screens/sign_up_screen.dart';
 import 'core/auth/screens/sign_in_screen.dart';
+import 'features/movies/views/screens/movie_details_screen.dart';
+import 'features/movies/views/screens/tv_show_details_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   try {
     debugPrint('Starting app initialization...');
 
@@ -29,12 +31,16 @@ Future<void> main() async {
     final auth = FirebaseAuth.instance;
     debugPrint('Auth state at startup: ${auth.currentUser?.uid}');
 
+    // Initialize WatchlistService
+    final watchlistService = await WatchlistService.create();
+    debugPrint('WatchlistService initialized successfully');
+
     // Test database connection if user is authenticated
     if (auth.currentUser != null) {
       await firebaseService.testDatabaseConnection();
     }
 
-    runApp(const AppRoot());
+    runApp(AppRoot(watchlistService: watchlistService));
   } catch (e) {
     debugPrint('Error in main: $e');
     rethrow;
@@ -42,7 +48,12 @@ Future<void> main() async {
 }
 
 class AppRoot extends StatelessWidget {
-  const AppRoot({super.key});
+  final WatchlistService watchlistService;
+
+  const AppRoot({
+    super.key,
+    required this.watchlistService,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +61,10 @@ class AppRoot extends StatelessWidget {
     final apiClient = ApiClient();
     final movieService = MovieService(apiClient);
     final tvService = TvService(apiClient);
-
     return MultiProvider(
-      providers: [        Provider<FirebaseService>.value(value: firebaseService),
+      providers: [
+        Provider<FirebaseService>.value(value: firebaseService),
+        ChangeNotifierProvider<WatchlistService>.value(value: watchlistService),
         StreamProvider<User?>(
           initialData: null,
           create: (_) => FirebaseAuth.instance.authStateChanges(),
@@ -101,6 +113,21 @@ class MyApp extends StatelessWidget {
             ),
         '/home': (context) => const HomeScreen(),
         '/sign-in': (context) => const SignInScreen(),
+        '/movieDetails': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments;
+          if (args is int) {
+            return MovieDetailsScreen(movieId: args);
+          }
+          return const Scaffold(body: Center(child: Text('Invalid movie ID')));
+        },
+        '/tvShowDetails': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments;
+          if (args is int) {
+            return TvShowDetailsScreen(tvShowId: args);
+          }
+          return const Scaffold(
+              body: Center(child: Text('Invalid TV show ID')));
+        },
       },
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),

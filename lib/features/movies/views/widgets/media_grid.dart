@@ -20,10 +20,10 @@ class MediaGrid extends StatelessWidget {
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {
-        final media = items[index].item;
+        final mediaItem = items[index];
         return MediaCard(
-          media: media,
-          onTap: () => onTap(media),
+          media: mediaItem.item,
+          onTap: () => onTap(mediaItem),
         );
       },
     );

@@ -8,7 +8,8 @@ class MediaCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const MediaCard({super.key, required this.media, required this.onTap})
-      : assert(media is Movie || media is TvShow);
+      : assert(media is Movie || media is TvShow,
+            'MediaCard only accepts Movie or TvShow');
 
   @override
   Widget build(BuildContext context) {
@@ -17,10 +18,10 @@ class MediaCard extends StatelessWidget {
 
     if (media is Movie) {
       posterPath = (media as Movie).fullPosterPath;
-      rating = (media as Movie).voteAverage;
+      rating = media.voteAverage;
     } else {
       posterPath = (media as TvShow).fullPosterPath;
-      rating = (media as TvShow).voteAverage;
+      rating = media.voteAverage;
     }
 
     return GestureDetector(

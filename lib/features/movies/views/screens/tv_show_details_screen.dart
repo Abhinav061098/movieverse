@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:movieverse/core/api/api_client.dart';
+import 'package:movieverse/features/movies/models/media_item.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import '../../models/tv_show_details.dart';
@@ -8,6 +10,7 @@ import '../../models/season.dart';
 import '../../models/credits.dart';
 import '../../services/tv_service.dart';
 import '../../services/favorites_service.dart';
+import '../widgets/add_to_watchlist_dialog.dart';
 import 'package:movieverse/core/mixins/analytics_mixin.dart';
 
 class TvShowDetailsScreen extends StatefulWidget {
@@ -26,7 +29,6 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
   Future<Season>? _selectedSeasonFuture;
   final TvService _tvService = TvService(ApiClient());
   int _selectedSeasonNumber = 1;
-  final bool _isFavorite = false;
 
   @override
   void initState() {
@@ -250,7 +252,27 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
             child: IconButton(
               icon: const Icon(Icons.playlist_add),
               onPressed: () {
-                // Add your watchlist logic here
+                if (FirebaseAuth.instance.currentUser == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please sign in to add to watchlist'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  return;
+                }
+
+                logEvent('add_to_watchlist_dialog', {
+                  'tv_show_id': widget.tvShowId,
+                  'tv_show_title': show.title,
+                });
+
+                showDialog(
+                  context: context,
+                  builder: (context) => AddToWatchlistDialog(
+                    mediaItem: MediaItem.fromTvShowDetails(show),
+                  ),
+                );
               },
               tooltip: 'Add to Watchlist',
             ),

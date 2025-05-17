@@ -1,14 +1,17 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:movieverse/core/api/api_client.dart';
 import 'package:movieverse/core/mixins/analytics_mixin.dart';
 import 'package:movieverse/features/movies/models/genre.dart';
+import 'package:movieverse/features/movies/models/media_item.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/movie_details.dart';
 import '../../models/credits.dart';
 import '../../services/movie_service.dart';
 import '../../services/favorites_service.dart';
+import '../widgets/add_to_watchlist_dialog.dart';
 
 class MovieDetailsScreen extends StatefulWidget {
   final int movieId;
@@ -25,7 +28,6 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
   late Future<String?> _certificationFuture;
   late Future<Map<String, dynamic>> _watchProvidersFuture;
   final MovieService _movieService = MovieService(ApiClient());
-  final bool _isFavorite = false;
 
   @override
   void initState() {
@@ -127,7 +129,27 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
             child: IconButton(
               icon: const Icon(Icons.playlist_add),
               onPressed: () {
-                // Add your watchlist logic here
+                if (FirebaseAuth.instance.currentUser == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please sign in to add to watchlist'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  return;
+                }
+
+                logEvent('add_to_watchlist_dialog', {
+                  'movie_id': widget.movieId,
+                  'movie_title': movie.title,
+                });
+
+                showDialog(
+                  context: context,
+                  builder: (context) => AddToWatchlistDialog(
+                    mediaItem: MediaItem.fromMovieDetails(movie),
+                  ),
+                );
               },
               tooltip: 'Add to Watchlist',
             ),

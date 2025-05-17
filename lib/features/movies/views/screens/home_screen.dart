@@ -9,6 +9,7 @@ import '../screens/movie_details_screen.dart';
 import '../screens/tv_show_details_screen.dart';
 import '../widgets/trailer_carousel.dart';
 import '../screens/favorites_screen.dart';
+import '../screens/watchlist_screen.dart';
 import '../../../../core/auth/screens/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -85,11 +86,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          body: _currentIndex == 0
-              ? _buildMoviesTab(movieViewModel)
-              : _currentIndex == 1
-                  ? _buildTvShowsTab(tvShowViewModel)
-                  : _buildFavoritesTab(),
+          body: IndexedStack(
+            index: _currentIndex,
+            children: [
+              _buildMoviesTab(movieViewModel),
+              _buildTvShowsTab(tvShowViewModel),
+              const FavoritesScreen(),
+              const WatchlistScreen(),
+            ],
+          ),
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _currentIndex,
             onTap: (index) {
@@ -97,11 +102,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 _currentIndex = index;
               });
             },
+            type: BottomNavigationBarType.fixed,
             items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.movie), label: 'Movies'),
-              BottomNavigationBarItem(icon: Icon(Icons.tv), label: 'TV Shows'),
               BottomNavigationBarItem(
-                  icon: Icon(Icons.favorite), label: 'Favorites'),
+                  icon: Icon(Icons.movie_outlined),
+                  activeIcon: Icon(Icons.movie),
+                  label: 'Movies'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.tv_outlined),
+                  activeIcon: Icon(Icons.tv),
+                  label: 'TV Shows'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.favorite_outline),
+                  activeIcon: Icon(Icons.favorite),
+                  label: 'Favorites'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.list_outlined),
+                  activeIcon: Icon(Icons.list),
+                  label: 'Watchlists'),
             ],
           ),
         );
@@ -264,9 +282,5 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildFavoritesTab() {
-    return const FavoritesScreen();
   }
 }

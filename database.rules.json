@@ -44,6 +44,36 @@
           }
         }
       }
+    },    "watchlists": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "$watchlistId": {
+          ".validate": "newData.hasChildren(['name', 'created_at', 'items', 'description'])",
+          "name": { ".validate": "newData.isString() && newData.val().length > 0" },
+          "description": { ".validate": "!newData.exists() || newData.isString()" },
+          "created_at": { ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/)" },
+          "items": {
+            "$itemId": {
+              ".validate": "newData.hasChildren(['id', 'media_type', 'added_at'])",
+              "id": { ".validate": "newData.isNumber() && newData.val() > 0" },
+              "media_type": { ".validate": "newData.isString() && (newData.val() === 'movie' || newData.val() === 'tv')" },
+              "poster_path": { ".validate": "!newData.exists() || newData.isString()" },
+              "backdrop_path": { ".validate": "!newData.exists() || newData.isString()" },
+              "overview": { ".validate": "!newData.exists() || newData.isString()" },
+              "vote_average": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10" },
+              "genre_ids": { 
+                "$index": { ".validate": "newData.isNumber() && newData.val() > 0" }
+              },
+              "added_at": { ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/)" },
+              "title": { ".validate": "(!newData.exists() || newData.isString()) && (!newData.parent().child('media_type').exists() || newData.parent().child('media_type').val() === 'movie')" },
+              "release_date": { ".validate": "!newData.exists() || newData.isString()" },
+              "name": { ".validate": "(!newData.exists() || newData.isString()) && (!newData.parent().child('media_type').exists() || newData.parent().child('media_type').val() === 'tv')" },
+              "first_air_date": { ".validate": "!newData.exists() || newData.isString()" }
+            }
+          }
+        }
+      }
     }
   }
 }
