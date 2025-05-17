@@ -268,4 +268,22 @@ class MovieService {
       return results.map((genre) => Genre.fromJson(genre)).toList();
     });
   }
+
+  /// Returns a list of popular movies filtered by genre IDs.
+  Future<List<Movie>> getPopularMoviesByGenres(List<int> genreIds,
+      {int page = 1}) async {
+    final allMovies = await getPopularMovies(page: page);
+    return allMovies
+        .where((movie) => movie.genreIds.any((id) => genreIds.contains(id)))
+        .toList();
+  }
+
+  /// Returns a list of top-rated movies filtered by genre IDs.
+  Future<List<Movie>> getTopRatedMoviesByGenres(List<int> genreIds,
+      {int page = 1}) async {
+    final allMovies = await getTopRatedMovies(page: page);
+    return allMovies
+        .where((movie) => movie.genreIds.any((id) => genreIds.contains(id)))
+        .toList();
+  }
 }
