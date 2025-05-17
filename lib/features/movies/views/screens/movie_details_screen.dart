@@ -12,8 +12,6 @@ import '../../models/credits.dart';
 import '../../services/movie_service.dart';
 import '../../services/favorites_service.dart';
 import '../widgets/add_to_watchlist_dialog.dart';
-import '../widgets/smart_recommendations_widget.dart';
-import '../widgets/movie_discussion_widget.dart';
 
 class MovieDetailsScreen extends StatefulWidget {
   final int movieId;
@@ -410,12 +408,6 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                           },
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      // Smart Recommendations
-                      const SmartRecommendationsWidget(),
-                      // Movie Discussion
-                      MovieDiscussionWidget(
-                          mediaItem: MediaItem.fromMovieDetails(movie)),
                       const SizedBox(height: 16),
                     ],
                   ),

@@ -12,8 +12,6 @@ import '../../services/tv_service.dart';
 import '../../services/favorites_service.dart';
 import '../widgets/add_to_watchlist_dialog.dart';
 import 'package:movieverse/core/mixins/analytics_mixin.dart';
-import '../widgets/smart_recommendations_widget.dart';
-import '../widgets/movie_discussion_widget.dart';
 
 class TvShowDetailsScreen extends StatefulWidget {
   final int tvShowId;
@@ -672,11 +670,6 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
                       ),
                       const SizedBox(height: 24),
                       const SizedBox(height: 16),
-                      // Smart Recommendations
-                      const SmartRecommendationsWidget(),
-                      // Movie Discussion
-                      MovieDiscussionWidget(
-                          mediaItem: MediaItem.fromTvShowDetails(show)),
                     ],
                   ),
                 ),
