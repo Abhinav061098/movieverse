@@ -57,15 +57,14 @@ class TvService {
       ApiConstants.tvShowVideos.replaceFirst('{tv_id}', tvId.toString()),
     );
 
-    final trailers =
-        (response['results'] as List)
-            .where(
-              (video) =>
-                  video['site'].toString().toLowerCase() == 'youtube' &&
-                  video['type'].toString().toLowerCase() == 'trailer',
-            )
-            .map((trailer) => MovieTrailer.fromJson(trailer))
-            .toList();
+    final trailers = (response['results'] as List)
+        .where(
+          (video) =>
+              video['site'].toString().toLowerCase() == 'youtube' &&
+              video['type'].toString().toLowerCase() == 'trailer',
+        )
+        .map((trailer) => MovieTrailer.fromJson(trailer))
+        .toList();
 
     trailers.sort(
       (a, b) => DateTime.parse(
@@ -147,5 +146,23 @@ class TvService {
       print('Error fetching watch providers: $e');
       return {};
     }
+  }
+
+  /// Returns a list of popular TV shows filtered by genre IDs.
+  Future<List<TvShow>> getPopularTvShowsByGenres(List<int> genreIds,
+      {int page = 1}) async {
+    final allShows = await getPopularTvShows(page: page);
+    return allShows
+        .where((show) => show.genreIds.any((id) => genreIds.contains(id)))
+        .toList();
+  }
+
+  /// Returns a list of top-rated TV shows filtered by genre IDs.
+  Future<List<TvShow>> getTopRatedTvShowsByGenres(List<int> genreIds,
+      {int page = 1}) async {
+    final allShows = await getTopRatedTvShows(page: page);
+    return allShows
+        .where((show) => show.genreIds.any((id) => genreIds.contains(id)))
+        .toList();
   }
 }

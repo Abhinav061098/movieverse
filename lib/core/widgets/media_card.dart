@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../features/movies/models/media_item.dart';
 import '../../features/movies/models/movie.dart';
 import '../../features/movies/models/tv_show.dart';
 
@@ -7,21 +8,26 @@ class MediaCard extends StatelessWidget {
   final dynamic media; // Can be either Movie or TvShow
   final VoidCallback onTap;
 
-  const MediaCard({super.key, required this.media, required this.onTap})
-      : assert(media is Movie || media is TvShow,
-            'MediaCard only accepts Movie or TvShow');
+  const MediaCard({super.key, required this.media, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final String posterPath;
     final double rating;
 
-    if (media is Movie) {
-      posterPath = (media as Movie).fullPosterPath;
-      rating = media.voteAverage;
+    // Accept MediaItem as well and extract Movie/TvShow
+    final dynamic coreMedia = (media is Movie || media is TvShow)
+        ? media
+        : (media is MediaItem ? media.item : null);
+    assert(coreMedia is Movie || coreMedia is TvShow,
+        'MediaCard only accepts Movie, TvShow, or MediaItem wrapping them');
+
+    if (coreMedia is Movie) {
+      posterPath = coreMedia.fullPosterPath;
+      rating = coreMedia.voteAverage;
     } else {
-      posterPath = (media as TvShow).fullPosterPath;
-      rating = media.voteAverage;
+      posterPath = coreMedia.fullPosterPath;
+      rating = coreMedia.voteAverage;
     }
 
     return GestureDetector(

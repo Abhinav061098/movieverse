@@ -74,6 +74,18 @@
           }
         }
       }
+    },
+    "media_comments": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$mediaId": {
+        "comments": {
+          ".indexOn": ["timestamp", "parentId"],
+          "$commentId": {
+            ".validate": "newData.hasChildren(['userId', 'userName', 'text', 'timestamp']) && (data.child('userId').val() == auth.uid || (!data.exists() && newData.child('userId').val() == auth.uid) || (newData.child('likes').isArray() && auth != null && data.child('userId').val() != null))"
+          }
+        }
+      }
     }
   }
 }

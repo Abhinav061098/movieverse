@@ -1,10 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:movieverse/core/api/api_client.dart';
 import 'package:movieverse/core/mixins/analytics_mixin.dart';
 import 'package:movieverse/features/movies/models/genre.dart';
 import 'package:movieverse/features/movies/models/media_item.dart';
+import 'package:movieverse/features/movies/views/widgets/movie_discussion_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/movie_details.dart';
@@ -12,6 +12,7 @@ import '../../models/credits.dart';
 import '../../services/movie_service.dart';
 import '../../services/favorites_service.dart';
 import '../widgets/add_to_watchlist_dialog.dart';
+import '../widgets/smart_recommendations_widget.dart';
 
 class MovieDetailsScreen extends StatefulWidget {
   final int movieId;
@@ -27,11 +28,12 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
   late Future<MovieDetails> _movieDetailsFuture;
   late Future<String?> _certificationFuture;
   late Future<Map<String, dynamic>> _watchProvidersFuture;
-  final MovieService _movieService = MovieService(ApiClient());
+  late MovieService _movieService;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _movieService = Provider.of<MovieService>(context, listen: false);
     _movieDetailsFuture = _movieService.fetchMovieDetails(widget.movieId);
     _certificationFuture = _movieService.getMovieCertification(widget.movieId);
     _watchProvidersFuture = _movieService.getWatchProviders(widget.movieId);
@@ -409,6 +411,14 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                         ),
                       ),
                       const SizedBox(height: 16),
+                      // Smart Recommendations
+                      const SmartRecommendationsWidget(isMovie: true),
+                      SizedBox(
+                        height: 16,
+                      ),
+                      MovieDiscussionWidget(
+                          mediaItem: MediaItem.fromMovieDetails(movie)),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),

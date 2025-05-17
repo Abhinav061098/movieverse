@@ -69,6 +69,9 @@ class AppRoot extends StatelessWidget {
           initialData: null,
           create: (_) => FirebaseAuth.instance.authStateChanges(),
         ),
+        Provider<MovieService>.value(value: movieService),
+        Provider<TvService>.value(value: tvService),
+        Provider<ApiClient>.value(value: apiClient),
         ChangeNotifierProvider(
           create: (_) => MovieViewModel(movieService),
         ),

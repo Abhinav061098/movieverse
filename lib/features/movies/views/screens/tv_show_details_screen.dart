@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:movieverse/core/api/api_client.dart';
 import 'package:movieverse/features/movies/models/media_item.dart';
+import 'package:movieverse/features/movies/views/widgets/movie_discussion_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import '../../models/tv_show_details.dart';
@@ -12,6 +13,7 @@ import '../../services/tv_service.dart';
 import '../../services/favorites_service.dart';
 import '../widgets/add_to_watchlist_dialog.dart';
 import 'package:movieverse/core/mixins/analytics_mixin.dart';
+import '../widgets/smart_recommendations_widget.dart';
 
 class TvShowDetailsScreen extends StatefulWidget {
   final int tvShowId;
@@ -670,6 +672,13 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
                       ),
                       const SizedBox(height: 24),
                       const SizedBox(height: 16),
+                      const SmartRecommendationsWidget(isMovie: false),
+                      SizedBox(
+                        height: 16,
+                      ),
+                      MovieDiscussionWidget(
+                          mediaItem: MediaItem.fromTvShowDetails(show)),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
