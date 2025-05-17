@@ -1,19 +1,19 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:movieverse/core/api/api_client.dart';
 import 'package:movieverse/core/mixins/analytics_mixin.dart';
 import 'package:movieverse/features/movies/models/genre.dart';
 import 'package:movieverse/features/movies/models/media_item.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../models/movie_details.dart';
 import '../../models/credits.dart';
 import '../../services/movie_service.dart';
 import '../../services/favorites_service.dart';
 import '../widgets/add_to_watchlist_dialog.dart';
-import '../widgets/smart_recommendations_widget.dart';
 import '../widgets/movie_discussion_widget.dart';
+import '../widgets/smart_recommendations_widget.dart';
 
 class MovieDetailsScreen extends StatefulWidget {
   final int movieId;
@@ -42,10 +42,15 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
   Future<void> _launchTrailer(MovieDetails movie) async {
     if (movie.trailers.isEmpty) return;
 
-    logEvent('watch_trailer', {
-      'movie_id': widget.movieId,
-      'movie_title': movie.title,
-    });
+    logUserEngagement(
+      action: 'watch_trailer',
+      contentType: 'movie',
+      contentId: widget.movieId.toString(),
+      extraParams: {
+        'movie_title': movie.title,
+        'trailer_id': movie.trailers.first.videoId,
+      },
+    );
 
     final trailer = movie.trailers.first;
     final url = 'https://www.youtube.com/watch?v=${trailer.videoId}';
@@ -56,60 +61,17 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
   }
 
   Future<void> _launchUrl(String url) async {
-    logEvent('open_watch_provider', {
-      'movie_id': widget.movieId,
-      'url': url,
-    });
+    logUserEngagement(
+      action: 'open_watch_provider',
+      contentType: 'movie',
+      contentId: widget.movieId.toString(),
+      extraParams: {'url': url},
+    );
 
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
-  }
-
-  Widget _buildFavoriteButton() {
-    final favoritesService = context.read<FavoritesService>();
-    return StreamBuilder<List<dynamic>>(
-      stream: favoritesService.favoritesStream,
-      initialData: const [],
-      builder: (context, snapshot) {
-        final isFavorite = favoritesService.isMovieFavorite(widget.movieId);
-        return IconButton(
-          icon: Icon(
-            isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: isFavorite ? Colors.red : Colors.white,
-          ),
-          onPressed: () async {
-            try {
-              final movieDetails = await _movieDetailsFuture;
-              final success = await favoritesService.toggleMovieFavorite(
-                widget.movieId,
-                details: movieDetails,
-              );
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(success
-                        ? 'Added to favorites'
-                        : 'Removed from favorites'),
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              }
-            } catch (e) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error: $e'),
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              }
-            }
-          },
-        );
-      },
-    );
   }
 
   Widget _buildFavoriteAndWatchlistButtons(MovieDetails movie) {
@@ -131,7 +93,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
             child: IconButton(
               icon: const Icon(Icons.playlist_add),
               onPressed: () {
-                if (FirebaseAuth.instance.currentUser == null) {
+                if (context.read<AuthService>().currentUser == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Please sign in to add to watchlist'),
@@ -168,6 +130,11 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
         future: _movieDetailsFuture,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
+            logError(
+              errorType: 'movie_details_load_error',
+              errorMessage: snapshot.error.toString(),
+              context: {'movie_id': widget.movieId},
+            );
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
@@ -253,6 +220,37 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                           ],
                         ),
                       ),
+                      Positioned(
+                        bottom: 16,
+                        left: 15,
+                        child: FutureBuilder<String?>(
+                          future: _certificationFuture,
+                          builder: (context, certSnapshot) {
+                            if (!certSnapshot.hasData ||
+                                certSnapshot.data == null) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black87,
+                                border: Border.all(color: Colors.white),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                certSnapshot.data!,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -279,7 +277,10 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                       FutureBuilder<String?>(
                         future: _certificationFuture,
                         builder: (context, certSnapshot) {
-                          return Row(
+                          return Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8, // horizontal spacing
+                            runSpacing: 4, // vertical spacing between lines
                             children: [
                               Text(
                                 movie.genres
@@ -287,34 +288,29 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                                     .join(', '),
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
-                              const SizedBox(width: 8),
                               const Text('•'),
-                              const SizedBox(width: 8),
                               Text(movie.formattedRuntime),
-                              if (certSnapshot.hasData &&
-                                  certSnapshot.data != null) ...[
-                                const SizedBox(width: 8),
-                                const Text('•'),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.white),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    certSnapshot.data!,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ),
-                              ],
+                              // if (certSnapshot.hasData &&
+                              //     certSnapshot.data != null) ...[
+                              //   const Text('•'),
+                              //   Container(
+                              //     padding: const EdgeInsets.symmetric(
+                              //         horizontal: 6, vertical: 2),
+                              //     decoration: BoxDecoration(
+                              //       border: Border.all(color: Colors.white),
+                              //       borderRadius: BorderRadius.circular(4),
+                              //     ),
+                              //     child: Text(
+                              //       certSnapshot.data!,
+                              //       style: const TextStyle(fontSize: 12),
+                              //     ),
+                              //   ),
+                              // ],
                             ],
                           );
                         },
                       ),
+
                       const SizedBox(height: 16),
 
                       // Overview
@@ -410,13 +406,15 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                           },
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      // Smart Recommendations
-                      const SmartRecommendationsWidget(),
-                      // Movie Discussion
-                      MovieDiscussionWidget(
-                          mediaItem: MediaItem.fromMovieDetails(movie)),
                       const SizedBox(height: 16),
+
+                      // Add Discussion section
+                      MovieDiscussionWidget(
+                        mediaItem: MediaItem.fromMovieDetails(movie),
+                      ),
+
+                      // Add Smart Recommendations
+                      const SmartRecommendationsWidget(),
                     ],
                   ),
                 ),
@@ -512,6 +510,61 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFavoriteButton() {
+    final favoritesService = context.read<FavoritesService>();
+    return StreamBuilder<List<MediaItem>>(
+      stream: favoritesService.favoritesStream,
+      initialData: const [],
+      builder: (context, snapshot) {
+        final isFavorite = favoritesService.isMovieFavorite(widget.movieId);
+        return IconButton(
+          icon: Icon(
+            isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: isFavorite ? Colors.red : Colors.white,
+          ),
+          onPressed: () async {
+            if (context.read<AuthService>().currentUser == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please sign in to add favorites'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+              return;
+            }
+
+            try {
+              final movieDetails = await _movieDetailsFuture;
+              final success = await favoritesService.toggleMovieFavorite(
+                widget.movieId,
+                details: movieDetails,
+              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(success
+                        ? 'Added to favorites'
+                        : 'Removed from favorites'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: ${e.toString()}'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            }
+          },
+        );
+      },
     );
   }
 }

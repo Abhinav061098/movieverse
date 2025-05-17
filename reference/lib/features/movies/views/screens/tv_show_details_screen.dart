@@ -1,19 +1,19 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:movieverse/core/api/api_client.dart';
 import 'package:movieverse/features/movies/models/media_item.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../models/tv_show_details.dart';
 import '../../models/season.dart';
 import '../../models/credits.dart';
 import '../../services/tv_service.dart';
 import '../../services/favorites_service.dart';
-import '../widgets/add_to_watchlist_dialog.dart';
 import 'package:movieverse/core/mixins/analytics_mixin.dart';
-import '../widgets/smart_recommendations_widget.dart';
+import '../widgets/add_to_watchlist_dialog.dart';
 import '../widgets/movie_discussion_widget.dart';
+import '../widgets/smart_recommendations_widget.dart';
 
 class TvShowDetailsScreen extends StatefulWidget {
   final int tvShowId;
@@ -28,8 +28,9 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
     with AnalyticsMixin {
   late Future<TvShowDetails> _tvShowDetailsFuture;
   late Future<Map<String, dynamic>> _watchProvidersFuture;
+  late Future<String?> _certificationFuture;
   Future<Season>? _selectedSeasonFuture;
-  final TvService _tvService = TvService(ApiClient());
+  final TvService _tvService = TvService(ApiClient().getDio);
   int _selectedSeasonNumber = 1;
 
   @override
@@ -37,6 +38,7 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
     super.initState();
     _tvShowDetailsFuture = _tvService.fetchTvShowDetails(widget.tvShowId);
     _watchProvidersFuture = _tvService.getWatchProviders(widget.tvShowId);
+    _certificationFuture = _tvService.getTvShowCertification(widget.tvShowId);
     _loadSelectedSeason();
   }
 
@@ -192,7 +194,7 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
 
   Widget _buildFavoriteButton() {
     final favoritesService = context.read<FavoritesService>();
-    return StreamBuilder<List<dynamic>>(
+    return StreamBuilder<List<MediaItem>>(
       stream: favoritesService.favoritesStream,
       initialData: const [],
       builder: (context, snapshot) {
@@ -203,6 +205,16 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
             color: isFavorite ? Colors.red : Colors.white,
           ),
           onPressed: () async {
+            if (context.read<AuthService>().currentUser == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please sign in to add favorites'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+              return;
+            }
+
             try {
               final tvShowDetails = await _tvShowDetailsFuture;
               final success = await favoritesService.toggleTvShowFavorite(
@@ -254,7 +266,7 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
             child: IconButton(
               icon: const Icon(Icons.playlist_add),
               onPressed: () {
-                if (FirebaseAuth.instance.currentUser == null) {
+                if (context.read<AuthService>().currentUser == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Please sign in to add to watchlist'),
@@ -374,6 +386,37 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
                             const SizedBox(height: 8),
                             _buildFavoriteAndWatchlistButtons(show),
                           ],
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 16,
+                        left: 15,
+                        child: FutureBuilder<String?>(
+                          future: _certificationFuture,
+                          builder: (context, certSnapshot) {
+                            if (!certSnapshot.hasData ||
+                                certSnapshot.data == null) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black87,
+                                border: Border.all(color: Colors.white),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                certSnapshot.data!,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -671,12 +714,16 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const SizedBox(height: 16),
-                      // Smart Recommendations
-                      const SmartRecommendationsWidget(),
-                      // Movie Discussion
+
+                      // Add Discussion section
                       MovieDiscussionWidget(
-                          mediaItem: MediaItem.fromTvShowDetails(show)),
+                        mediaItem: MediaItem.fromTvShowDetails(show),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Add Smart Recommendations
+                      const SmartRecommendationsWidget(),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
