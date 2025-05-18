@@ -14,6 +14,8 @@ import '../../services/favorites_service.dart';
 import '../widgets/add_to_watchlist_dialog.dart';
 import 'package:movieverse/core/mixins/analytics_mixin.dart';
 import '../widgets/smart_recommendations_widget.dart';
+import '../../models/cast.dart';
+import 'cast_screen.dart';
 
 class TvShowDetailsScreen extends StatefulWidget {
   final int tvShowId;
@@ -150,42 +152,56 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
   }
 
   Widget _buildCastCard(CastMember castMember) {
-    return Container(
-      width: 120,
-      margin: const EdgeInsets.only(right: 12),
-      child: Column(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: CachedNetworkImage(
-              imageUrl: castMember.fullProfilePath,
-              height: 120,
-              width: 120,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
-                color: Colors.grey[850],
-                child: const Icon(Icons.person, size: 40),
-              ),
-              errorWidget: (context, url, error) => Container(
-                color: Colors.grey[850],
-                child: const Icon(Icons.person, size: 40),
-              ),
+    return GestureDetector(
+      onTap: () async {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CastScreen(
+              castId: castMember.id,
+              name: castMember.name,
+              profilePath: castMember.profilePath,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            castMember.name,
-            style: const TextStyle(fontWeight: FontWeight.w500),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            castMember.character,
-            style: TextStyle(color: Colors.grey[400], fontSize: 12),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+        );
+      },
+      child: Container(
+        width: 120,
+        margin: const EdgeInsets.only(right: 12),
+        child: Column(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: CachedNetworkImage(
+                imageUrl: castMember.fullProfilePath,
+                height: 120,
+                width: 120,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[850],
+                  child: const Icon(Icons.person, size: 40),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[850],
+                  child: const Icon(Icons.person, size: 40),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              castMember.name,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              castMember.character,
+              style: TextStyle(color: Colors.grey[400], fontSize: 12),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }

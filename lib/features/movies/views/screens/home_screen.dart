@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:movieverse/features/movies/views/widgets/directors_widget.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/movie_view_model.dart';
 import '../../viewmodels/tv_show_view_model.dart';
@@ -200,6 +201,22 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             if (movieViewModel.trailers.isNotEmpty)
               TrailerCarousel(trailers: movieViewModel.trailers),
+            const SizedBox(height: 16),
+            DirectorsWidget(
+              directors: movieViewModel.popularDirectors,
+              title: 'Directors',
+              isLoading: movieViewModel.state == MovieListState.loading &&
+                  movieViewModel.popularDirectors.isEmpty,
+              onSeeAllPressed: () {
+                movieViewModel.loadMoreDirectors();
+              },
+            ),
+            if (movieViewModel.state == MovieListState.loading &&
+                movieViewModel.popularDirectors.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(child: CircularProgressIndicator()),
+              ),
             const SizedBox(height: 38),
           ],
         ),
@@ -278,6 +295,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
+            const SizedBox(height: 16),
+            if (tvShowViewModel.popularDirectors.isNotEmpty)
+              DirectorsWidget(
+                directors: tvShowViewModel.popularDirectors,
+                title: 'Directors',
+                onSeeAllPressed: () {
+                  tvShowViewModel.loadMoreDirectors();
+                },
+              ),
           ],
         ),
       ),

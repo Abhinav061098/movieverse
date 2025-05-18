@@ -1,12 +1,15 @@
 import 'package:flutter/foundation.dart';
 import '../models/tv_show.dart';
+import '../models/director.dart';
 import '../services/tv_service.dart';
+import '../services/director_service.dart';
 import '../models/genre.dart';
 
 enum TvShowListState { initial, loading, loaded, error }
 
 class TvShowViewModel with ChangeNotifier {
   final TvService _tvService;
+  final DirectorService _directorService;
   TvShowListState _state = TvShowListState.initial;
   String _error = '';
 
@@ -15,22 +18,27 @@ class TvShowViewModel with ChangeNotifier {
   List<TvShow> _airingTodayShows = [];
   List<TvShow> _onTheAirShows = [];
   List<Genre> _genres = [];
+  List<Director> _popularDirectors = [];
   int? _selectedGenreId;
 
   int _popularTvShowsPage = 1;
   int _topRatedTvShowsPage = 1;
   int _airingTodayShowsPage = 1;
   int _onTheAirShowsPage = 1;
+  int _directorsPage = 1;
+  static const int _directorsPerPage = 15;
   bool _hasMorePopularTvShows = true;
   bool _hasMoreTopRatedTvShows = true;
   bool _hasMoreAiringTodayShows = true;
   bool _hasMoreOnTheAirShows = true;
+  bool _hasMoreDirectors = true;
   bool _isLoadingMorePopularTvShows = false;
   bool _isLoadingMoreTopRatedTvShows = false;
   bool _isLoadingMoreAiringTodayShows = false;
   bool _isLoadingMoreOnTheAirShows = false;
+  bool _isLoadingMoreDirectors = false;
 
-  TvShowViewModel(this._tvService);
+  TvShowViewModel(this._tvService, this._directorService);
 
   TvShowListState get state => _state;
   String get error => _error;
@@ -45,6 +53,7 @@ class TvShowViewModel with ChangeNotifier {
   bool get isLoadingMoreTopRatedTvShows => _isLoadingMoreTopRatedTvShows;
   bool get isLoadingMoreAiringTodayShows => _isLoadingMoreAiringTodayShows;
   bool get isLoadingMoreOnTheAirShows => _isLoadingMoreOnTheAirShows;
+  bool get isLoadingMoreDirectors => _isLoadingMoreDirectors;
 
   List<TvShow> get filteredPopularTvShows => _selectedGenreId == null
       ? _popularTvShows
@@ -67,17 +76,73 @@ class TvShowViewModel with ChangeNotifier {
           .where((t) => t.genreIds.contains(_selectedGenreId))
           .toList();
 
+  List<Director> get popularDirectors => _popularDirectors;
+
+  Future<void> loadPopularDirectors({bool reset = false}) async {
+    if (reset) {
+      _directorsPage = 1;
+      _popularDirectors = [];
+      _hasMoreDirectors = true;
+    }
+    if (_isLoadingMoreDirectors || !_hasMoreDirectors) return;
+    _isLoadingMoreDirectors = true;
+    debugPrint('Loading directors page: \\$_directorsPage');
+    final directors = <Director>[];
+    final showsMap = <int, dynamic>{};
+    for (var show in _popularTvShows.take(_directorsPerPage * _directorsPage)) {
+      showsMap[show.id] = show;
+    }
+    for (var show
+        in _topRatedTvShows.take(_directorsPerPage * _directorsPage)) {
+      showsMap[show.id] = show;
+    }
+    for (var show
+        in _airingTodayShows.take(_directorsPerPage * _directorsPage)) {
+      showsMap[show.id] = show;
+    }
+    for (var show in _onTheAirShows.take(_directorsPerPage * _directorsPage)) {
+      showsMap[show.id] = show;
+    }
+    final allShows = showsMap.values.toList();
+    if (allShows.isEmpty) {
+      debugPrint('No TV shows available to fetch directors');
+      _isLoadingMoreDirectors = false;
+      return;
+    }
+    for (var show in allShows) {
+      final showDirectors = await _directorService.getTvShowDirectors(show.id);
+      directors.addAll(showDirectors);
+    }
+    final uniqueDirectors = directors
+        .fold<Map<int, Director>>({}, (map, dir) {
+          if (!map.containsKey(dir.id)) {
+            map[dir.id] = dir;
+          }
+          return map;
+        })
+        .values
+        .toList();
+    final previousCount = _popularDirectors.length;
+    _popularDirectors =
+        uniqueDirectors.take(_directorsPerPage * _directorsPage).toList();
+    _hasMoreDirectors = _popularDirectors.length > previousCount;
+    _isLoadingMoreDirectors = false;
+    notifyListeners();
+  }
+
   Future<void> loadInitialData() async {
     _state = TvShowListState.loading;
     notifyListeners();
     try {
       await _loadTvShowData();
       await fetchGenres();
+      await loadPopularDirectors();
       _state = TvShowListState.loaded;
     } catch (e) {
       _error = e.toString();
       _state = TvShowListState.error;
     }
+    ;
     notifyListeners();
   }
 
@@ -117,14 +182,17 @@ class TvShowViewModel with ChangeNotifier {
     _topRatedTvShowsPage = 1;
     _airingTodayShowsPage = 1;
     _onTheAirShowsPage = 1;
+    _directorsPage = 1;
     _hasMorePopularTvShows = true;
     _hasMoreTopRatedTvShows = true;
     _hasMoreAiringTodayShows = true;
     _hasMoreOnTheAirShows = true;
+    _hasMoreDirectors = true;
     _isLoadingMorePopularTvShows = false;
     _isLoadingMoreTopRatedTvShows = false;
     _isLoadingMoreAiringTodayShows = false;
     _isLoadingMoreOnTheAirShows = false;
+    _isLoadingMoreDirectors = false;
     notifyListeners();
     await loadInitialData();
   }
@@ -215,5 +283,11 @@ class TvShowViewModel with ChangeNotifier {
       _isLoadingMoreOnTheAirShows = false;
       notifyListeners();
     }
+  }
+
+  Future<void> loadMoreDirectors() async {
+    if (_isLoadingMoreDirectors || !_hasMoreDirectors) return;
+    _directorsPage++;
+    await loadPopularDirectors();
   }
 }

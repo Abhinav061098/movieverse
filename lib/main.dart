@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:movieverse/features/movies/services/director_service.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -61,6 +62,9 @@ class AppRoot extends StatelessWidget {
     final apiClient = ApiClient();
     final movieService = MovieService(apiClient);
     final tvService = TvService(apiClient);
+    // Assuming you have a DirectorService, initialize it here
+    final directorService =
+        DirectorService(apiClient); // Pass apiClient as required argument
     return MultiProvider(
       providers: [
         Provider<FirebaseService>.value(value: firebaseService),
@@ -72,11 +76,14 @@ class AppRoot extends StatelessWidget {
         Provider<MovieService>.value(value: movieService),
         Provider<TvService>.value(value: tvService),
         Provider<ApiClient>.value(value: apiClient),
-        ChangeNotifierProvider(
-          create: (_) => MovieViewModel(movieService),
+        Provider<DirectorService>(
+          create: (context) => DirectorService(context.read<ApiClient>()),
         ),
         ChangeNotifierProvider(
-          create: (_) => TvShowViewModel(tvService),
+          create: (_) => MovieViewModel(movieService, directorService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => TvShowViewModel(tvService, directorService),
         ),
         ChangeNotifierProvider<FavoritesService>(
           create: (_) => FavoritesService(),

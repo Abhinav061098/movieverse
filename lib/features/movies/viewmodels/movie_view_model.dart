@@ -3,12 +3,15 @@ import '../models/movie.dart';
 import '../models/movie_trailer.dart';
 import '../models/movie_details.dart';
 import '../models/genre.dart';
+import '../models/director.dart';
 import '../services/movie_service.dart';
+import '../services/director_service.dart';
 
 enum MovieListState { initial, loading, loaded, error }
 
 class MovieViewModel with ChangeNotifier {
   final MovieService _movieService;
+  final DirectorService _directorService;
   MovieListState _state = MovieListState.initial;
   String _error = '';
 
@@ -18,19 +21,24 @@ class MovieViewModel with ChangeNotifier {
   List<MovieTrailer> _latestTrailers = [];
   MovieDetails? _movieOfTheDay;
   List<Genre> _genres = [];
+  List<Director> _popularDirectors = [];
   int? _selectedGenreId;
 
   int _popularMoviesPage = 1;
   int _topRatedMoviesPage = 1;
   int _upcomingMoviesPage = 1;
+  int _directorsPage = 1;
+  static const int _directorsPerPage = 15;
   bool _hasMorePopularMovies = true;
   bool _hasMoreTopRatedMovies = true;
   bool _hasMoreUpcomingMovies = true;
+  bool _hasMoreDirectors = true;
   bool _isLoadingMorePopularMovies = false;
   bool _isLoadingMoreTopRatedMovies = false;
   bool _isLoadingMoreUpcomingMovies = false;
+  bool _isLoadingMoreDirectors = false;
 
-  MovieViewModel(this._movieService);
+  MovieViewModel(this._movieService, this._directorService);
 
   MovieListState get state => _state;
   String get error => _error;
@@ -42,6 +50,7 @@ class MovieViewModel with ChangeNotifier {
   MovieDetails? get movieOfTheDay => _movieOfTheDay;
   List<Genre> get genres => _genres;
   int? get selectedGenreId => _selectedGenreId;
+  List<Director> get popularDirectors => _popularDirectors;
 
   List<Movie> get filteredPopularMovies => _selectedGenreId == null
       ? _popularMovies
@@ -62,24 +71,32 @@ class MovieViewModel with ChangeNotifier {
   bool get isLoadingMorePopularMovies => _isLoadingMorePopularMovies;
   bool get isLoadingMoreTopRatedMovies => _isLoadingMoreTopRatedMovies;
   bool get isLoadingMoreUpcomingMovies => _isLoadingMoreUpcomingMovies;
+  bool get isLoadingMoreDirectors => _isLoadingMoreDirectors;
   bool get hasMorePopularMovies => _hasMorePopularMovies;
   bool get hasMoreTopRatedMovies => _hasMoreTopRatedMovies;
   bool get hasMoreUpcomingMovies => _hasMoreUpcomingMovies;
+  bool get hasMoreDirectors => _hasMoreDirectors;
 
   Future<void> loadInitialData() async {
     _state = MovieListState.loading;
     notifyListeners();
     try {
+      // First load all movie data
       await Future.wait([
         _loadMovieOfTheDay(),
         _loadMovieData(),
         _loadLatestTrailers(),
         fetchGenres(),
       ]);
+
+      // Then load directors after we have the movies
+      await _loadPopularDirectors();
+
       _state = MovieListState.loaded;
     } catch (e) {
       _error = e.toString();
       _state = MovieListState.error;
+      debugPrint('Error in loadInitialData: $e');
     }
     notifyListeners();
   }
@@ -133,12 +150,15 @@ class MovieViewModel with ChangeNotifier {
     _popularMoviesPage = 1;
     _topRatedMoviesPage = 1;
     _upcomingMoviesPage = 1;
+    _directorsPage = 1;
     _hasMorePopularMovies = true;
     _hasMoreTopRatedMovies = true;
     _hasMoreUpcomingMovies = true;
+    _hasMoreDirectors = true;
     _isLoadingMorePopularMovies = false;
     _isLoadingMoreTopRatedMovies = false;
     _isLoadingMoreUpcomingMovies = false;
+    _isLoadingMoreDirectors = false;
     notifyListeners();
     await loadInitialData();
   }
@@ -207,5 +227,66 @@ class MovieViewModel with ChangeNotifier {
       _isLoadingMoreUpcomingMovies = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _loadPopularDirectors({bool reset = false}) async {
+    if (reset) {
+      _directorsPage = 1;
+      _popularDirectors = [];
+      _hasMoreDirectors = true;
+    }
+    if (_isLoadingMoreDirectors || !_hasMoreDirectors) return;
+    _isLoadingMoreDirectors = true;
+    debugPrint('Loading directors page: \\$_directorsPage');
+    final moviesMap = <int, Movie>{};
+    for (var movie in _popularMovies.take(_directorsPerPage * _directorsPage)) {
+      moviesMap[movie.id] = movie;
+    }
+    for (var movie
+        in _topRatedMovies.take(_directorsPerPage * _directorsPage)) {
+      moviesMap[movie.id] = movie;
+    }
+    for (var movie
+        in _upcomingMovies.take(_directorsPerPage * _directorsPage)) {
+      moviesMap[movie.id] = movie;
+    }
+    final allMovies = moviesMap.values.toList();
+    if (allMovies.isEmpty) {
+      debugPrint('No movies available to fetch directors');
+      _isLoadingMoreDirectors = false;
+      return;
+    }
+    final directors = <Director>[];
+    for (var movie in allMovies) {
+      try {
+        final movieDirectors =
+            await _directorService.getMovieDirectors(movie.id);
+        directors.addAll(movieDirectors);
+      } catch (e) {
+        debugPrint(
+            'Error fetching directors for movie \\${movie.title}: \\${e}');
+      }
+    }
+    final uniqueDirectors = directors
+        .fold<Map<int, Director>>({}, (map, dir) {
+          if (!map.containsKey(dir.id)) {
+            map[dir.id] = dir;
+          }
+          return map;
+        })
+        .values
+        .toList();
+    final previousCount = _popularDirectors.length;
+    _popularDirectors =
+        uniqueDirectors.take(_directorsPerPage * _directorsPage).toList();
+    _hasMoreDirectors = _popularDirectors.length > previousCount;
+    _isLoadingMoreDirectors = false;
+    notifyListeners();
+  }
+
+  Future<void> loadMoreDirectors() async {
+    if (_isLoadingMoreDirectors || !_hasMoreDirectors) return;
+    _directorsPage++;
+    await _loadPopularDirectors();
   }
 }
