@@ -11,7 +11,8 @@ class UserProfileService {
     int retryCount = 0;
     while (retryCount < _maxRetries) {
       try {
-        debugPrint('Fetching profile for user $uid (attempt ${retryCount + 1})');
+        debugPrint(
+            'Fetching profile for user $uid (attempt ${retryCount + 1})');
         final snapshot = await _db.child('users/$uid').get();
 
         debugPrint('Snapshot exists: ${snapshot.exists}');
@@ -29,14 +30,15 @@ class UserProfileService {
 
         // Prevent pigeon error: check type before casting
         if (snapshot.value is! Map) {
-          debugPrint('Pigeon error: Data at users/$uid is not a Map. Actual value: ${snapshot.value}');
+          debugPrint(
+              'Pigeon error: Data at users/$uid is not a Map. Actual value: ${snapshot.value}');
           throw Exception(
-              'Profile data is not a Map (object). Actual type: ${snapshot.value.runtimeType}.\n' +
-              'This usually means the data at /users/$uid in your Firebase Realtime Database is an array or list, not an object.\n' +
-              'Please delete the /users/$uid node in your database and try again.');
+              'Profile data is not a Map (object). Actual type: ${snapshot.value.runtimeType}.\n'
+                      'This usually means the data at /users/$uid in your Firebase Realtime Database is an array or list, not an object.\n' +
+                  'Please delete the /users/$uid node in your database and try again.');
         }
         final data = Map<String, dynamic>.from(snapshot.value as Map);
-        debugPrint('Profile data is a Map: ${data}');
+        debugPrint('Profile data is a Map: $data');
         return UserProfile.fromMap(data);
       } catch (e, stack) {
         retryCount++;

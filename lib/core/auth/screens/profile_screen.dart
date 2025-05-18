@@ -5,7 +5,7 @@ import '../services/user_profile_service.dart';
 import 'package:intl/intl.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -97,35 +97,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 32),
                     child: Column(
                       children: [
                         CircleAvatar(
                           radius: 48,
-                          backgroundImage: _profile!.profileImageUrl != null && _profile!.profileImageUrl!.isNotEmpty
+                          backgroundImage: _profile!.profileImageUrl != null &&
+                                  _profile!.profileImageUrl!.isNotEmpty
                               ? NetworkImage(_profile!.profileImageUrl!)
                               : null,
-                          child: _profile!.profileImageUrl == null || _profile!.profileImageUrl!.isEmpty
+                          child: _profile!.profileImageUrl == null ||
+                                  _profile!.profileImageUrl!.isEmpty
                               ? Text(
-                                  _profile!.username.isNotEmpty ? _profile!.username[0].toUpperCase() : '?',
-                                  style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                                  _profile!.username.isNotEmpty
+                                      ? _profile!.username[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.bold),
                                 )
                               : null,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           _profile!.username,
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           _profile!.email,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey[400]),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyLarge
+                              ?.copyWith(color: Colors.grey[400]),
                         ),
                         const Divider(height: 32, thickness: 1.2),
-                        _profileInfoRow(Icons.person, 'Gender', _profile!.gender),
-                        _profileInfoRow(Icons.cake, 'Date of Birth', DateFormat('yyyy-MM-dd').format(_profile!.dob)),
-                        _profileInfoRow(Icons.flag, 'Country', _profile!.country),
+                        _profileInfoRow(
+                            Icons.person, 'Gender', _profile!.gender),
+                        _profileInfoRow(Icons.cake, 'Date of Birth',
+                            DateFormat('yyyy-MM-dd').format(_profile!.dob)),
+                        _profileInfoRow(
+                            Icons.flag, 'Country', _profile!.country),
                         const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
@@ -139,7 +155,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 16),
                             ),
                             icon: const Icon(Icons.logout),
-                            label: const Text('Logout', style: TextStyle(fontSize: 16)),
+                            label: const Text('Logout',
+                                style: TextStyle(fontSize: 16)),
                           ),
                         ),
                       ],

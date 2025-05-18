@@ -14,7 +14,6 @@ import '../../services/favorites_service.dart';
 import '../widgets/add_to_watchlist_dialog.dart';
 import 'package:movieverse/core/mixins/analytics_mixin.dart';
 import '../widgets/smart_recommendations_widget.dart';
-import '../../models/cast.dart';
 import 'cast_screen.dart';
 
 class TvShowDetailsScreen extends StatefulWidget {

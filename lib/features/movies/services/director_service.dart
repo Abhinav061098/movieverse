@@ -40,14 +40,14 @@ class DirectorService {
 
       if (!response.containsKey('crew')) {
         print('No crew found for movie $movieId');
-        print('Full credits: \\${response}');
+        print('Full credits: \\$response');
         return [];
       }
 
       final crew = response['crew'] as List;
       print('Found \\${crew.length} crew members for movie $movieId');
       if (crew.isEmpty) {
-        print('Crew list is empty! Full response: \\${response}');
+        print('Crew list is empty! Full response: \\$response');
       } else {
         print('First 3 crew entries:');
         for (var i = 0; i < crew.length && i < 3; i++) {
@@ -76,7 +76,7 @@ class DirectorService {
       print('Error response: \\${e.response?.data}');
       return [];
     } catch (e) {
-      print('Unexpected error in getMovieDirectors: \\${e}');
+      print('Unexpected error in getMovieDirectors: \\$e');
       return [];
     }
   }
@@ -96,14 +96,14 @@ class DirectorService {
       if (!response.containsKey('credits') ||
           !response['credits'].containsKey('crew')) {
         print('No credits or crew data found for TV show $tvShowId');
-        print('Full response: \\${response}');
+        print('Full response: \\$response');
         return [];
       }
 
       final crew = response['credits']['crew'] as List;
       print('Found \\${crew.length} crew members for TV show $tvShowId');
       if (crew.isEmpty) {
-        print('Crew list is empty! Full response: \\${response}');
+        print('Crew list is empty! Full response: \\$response');
       } else {
         print('First 3 crew entries:');
         for (var i = 0; i < crew.length && i < 3; i++) {
@@ -142,7 +142,7 @@ class DirectorService {
       print('Error response: \\${e.response?.data}');
       return [];
     } catch (e) {
-      print('Unexpected error in getTvShowDirectors: \\${e}');
+      print('Unexpected error in getTvShowDirectors: \\$e');
       return [];
     }
   }

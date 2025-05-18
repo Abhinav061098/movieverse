@@ -142,7 +142,6 @@ class TvShowViewModel with ChangeNotifier {
       _error = e.toString();
       _state = TvShowListState.error;
     }
-    ;
     notifyListeners();
   }
 

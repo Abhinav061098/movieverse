@@ -157,7 +157,7 @@ class _ModernCollapsibleCastViewState
     final List<String> collageUrls = [
       ...?cast.movies?.map((m) => m.fullPosterPath),
       ...?cast.tvShows?.map((t) => t.fullPosterPath),
-    ].where((url) => url != null && url.isNotEmpty).cast<String>().toList();
+    ].where((url) => url.isNotEmpty).cast<String>().toList();
     return Column(
       children: [
         AnimatedContainer(

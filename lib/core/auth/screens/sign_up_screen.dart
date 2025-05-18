@@ -86,8 +86,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         debugPrint(
             'Pigeon error: Data at users/${user.uid} is not a Map. Actual value: ${verifySnapshot.value}');
         throw Exception(
-            'Profile data is not a Map (object). Actual type: ${verifySnapshot.value.runtimeType}.\n' +
-                'This usually means the data at /users/${user.uid} in your Firebase Realtime Database is an array or list, not an object.\n' +
+            'Profile data is not a Map (object). Actual type: ${verifySnapshot.value.runtimeType}.\n'
+                    'This usually means the data at /users/${user.uid} in your Firebase Realtime Database is an array or list, not an object.\n' +
                 'Please delete the /users/${user.uid} node in your database and try again.');
       }
       final data = Map<String, dynamic>.from(verifySnapshot.value as Map);

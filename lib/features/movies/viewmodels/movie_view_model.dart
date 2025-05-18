@@ -263,8 +263,7 @@ class MovieViewModel with ChangeNotifier {
             await _directorService.getMovieDirectors(movie.id);
         directors.addAll(movieDirectors);
       } catch (e) {
-        debugPrint(
-            'Error fetching directors for movie \\${movie.title}: \\${e}');
+        debugPrint('Error fetching directors for movie \\${movie.title}: \\$e');
       }
     }
     final uniqueDirectors = directors

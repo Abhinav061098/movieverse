@@ -601,9 +601,9 @@ class _ActionButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.textColor,
-    this.fontSize = 13,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+    this.fontSize,
+  });
 
   @override
   Widget build(BuildContext context) {
