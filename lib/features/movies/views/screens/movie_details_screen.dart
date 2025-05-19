@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:movieverse/core/mixins/analytics_mixin.dart';
 import 'package:movieverse/features/movies/models/genre.dart';
 import 'package:movieverse/features/movies/models/media_item.dart';
-import 'package:movieverse/features/movies/views/widgets/movie_discussion_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/movie_details.dart';
@@ -13,6 +12,8 @@ import '../../services/movie_service.dart';
 import '../../services/favorites_service.dart';
 import '../widgets/add_to_watchlist_dialog.dart';
 import '../widgets/smart_recommendations_widget.dart';
+import '../widgets/watch_providers_dialog.dart';
+import '../widgets/detail_shimmer_widgets.dart';
 import 'cast_screen.dart';
 import 'media_social_screen.dart';
 
@@ -51,9 +52,22 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
 
     final trailer = movie.trailers.first;
     final url = 'https://www.youtube.com/watch?v=${trailer.videoId}';
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalNonBrowserApplication,
+        );
+      } else {
+        // Fallback to browser if app launch fails
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error launching URL: $e');
     }
   }
 
@@ -169,12 +183,66 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
       body: FutureBuilder<MovieDetails>(
         future: _movieDetailsFuture,
         builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: MediaQuery.of(context).size.height * 0.6,
+                  pinned: true,
+                  flexibleSpace: const ShimmerDetailHeader(),
+                ),
+                const SliverToBoxAdapter(
+                  child: ShimmerDetailInfo(),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const ShimmerCreditsSection(),
+                        const SizedBox(height: 24),
+                        Container(
+                          width: 100,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[850],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 180,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: 5,
+                            itemBuilder: (context, index) =>
+                                const ShimmerCastCard(),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const SmartRecommendationsWidget(isMovie: true),
+                        const SizedBox(height: 16),
+                        const ShimmerCreditsSection(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: const TextStyle(color: Colors.red),
+              ),
+            );
           }
 
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: Text('No data available'));
           }
 
           final movie = snapshot.data!;
@@ -192,11 +260,8 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                       CachedNetworkImage(
                         imageUrl: movie.fullPosterPath,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: Colors.black,
-                          child:
-                              const Center(child: CircularProgressIndicator()),
-                        ),
+                        placeholder: (context, url) =>
+                            const ShimmerDetailHeader(),
                         errorWidget: (context, url, error) => Container(
                           color: Colors.black,
                           child: const Icon(Icons.error),
@@ -357,15 +422,15 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                                 return const SizedBox.shrink();
                               }
 
-                              final providers = snapshot.data!;
-                              String? watchLink = providers['link']?.toString();
-
-                              if (watchLink == null) {
-                                return const SizedBox.shrink();
-                              }
-
                               return ElevatedButton.icon(
-                                onPressed: () => _launchUrl(watchLink),
+                                onPressed: () {
+                                  WatchProvidersDialog.show(
+                                    context,
+                                    mediaId: widget.movieId,
+                                    isMovie: true,
+                                    title: movie.title,
+                                  );
+                                },
                                 icon: const Icon(Icons.tv),
                                 label: const Text('Watch'),
                                 style: ElevatedButton.styleFrom(

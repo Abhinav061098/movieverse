@@ -130,21 +130,44 @@ class TvService {
     }
   }
 
-  Future<Map<String, dynamic>> getWatchProviders(int tvShowId) async {
+  Future<Map<String, dynamic>> getWatchProviders(int tvId) async {
+    print('=== TV WATCH PROVIDERS ===');
+    print('Fetching watch providers for TV show ID: $tvId');
     try {
-      final response = await _apiClient.get('/tv/$tvShowId/watch/providers');
+      final response = await _apiClient.get('/tv/$tvId/watch/providers');
+      print('Raw watch providers response: $response');
 
-      // Get US results or fall back to first available region
-      final results = response['results'] as Map<String, dynamic>;
-      if (results.containsKey('US')) {
-        return results['US'] as Map<String, dynamic>;
-      } else if (results.isNotEmpty) {
-        return results.values.first as Map<String, dynamic>;
+      // Add detailed logging of the response structure
+      if (response != null && response.isNotEmpty) {
+        print('\nDetailed watch providers response structure:');
+        print('Results: ${response['results']}');
+        if (response['results'] != null) {
+          final results = response['results'] as Map<String, dynamic>;
+          print('\nAvailable regions: ${results.keys.join(', ')}');
+          if (results.containsKey('US')) {
+            final usData = results['US'];
+            print('\nUS data structure:');
+            print('Flatrate: ${usData['flatrate']}');
+            print('Rent: ${usData['rent']}');
+            print('Buy: ${usData['buy']}');
+            print('Free: ${usData['free']}');
+            print('Link: ${usData['link']}');
+          }
+        }
       }
-      return {};
+
+      if (response == null || response.isEmpty) {
+        print('Empty response received for watch providers');
+        return {
+          'results': {}
+        }; // Return empty results structure instead of empty map
+      }
+
+      // Return the complete response structure
+      return response;
     } catch (e) {
       print('Error fetching watch providers: $e');
-      return {};
+      return {'results': {}}; // Return empty results structure on error
     }
   }
 

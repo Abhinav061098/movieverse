@@ -16,6 +16,7 @@ import '../widgets/add_to_watchlist_dialog.dart';
 import 'package:movieverse/core/mixins/analytics_mixin.dart';
 import '../widgets/smart_recommendations_widget.dart';
 import '../widgets/detail_shimmer_widgets.dart';
+import '../widgets/watch_providers_dialog.dart';
 import 'cast_screen.dart';
 
 class TvShowDetailsScreen extends StatefulWidget {
@@ -68,9 +69,22 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
 
     final trailer = show.trailers.first;
     final url = 'https://www.youtube.com/watch?v=${trailer.videoId}';
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalNonBrowserApplication,
+        );
+      } else {
+        // Fallback to browser if app launch fails
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error launching URL: $e');
     }
   }
 
@@ -538,15 +552,15 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
                                 return const SizedBox.shrink();
                               }
 
-                              final providers = snapshot.data!;
-                              String? watchLink = providers['link']?.toString();
-
-                              if (watchLink == null) {
-                                return const SizedBox.shrink();
-                              }
-
                               return ElevatedButton.icon(
-                                onPressed: () => _launchUrl(watchLink),
+                                onPressed: () {
+                                  WatchProvidersDialog.show(
+                                    context,
+                                    mediaId: widget.tvShowId,
+                                    isMovie: false,
+                                    title: show.title,
+                                  );
+                                },
                                 icon: const Icon(Icons.tv),
                                 label: const Text('Watch'),
                                 style: ElevatedButton.styleFrom(

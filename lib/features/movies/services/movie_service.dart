@@ -7,6 +7,7 @@ import '../models/movie_trailer.dart';
 import '../models/movie_details.dart';
 import '../models/credits.dart';
 import '../models/genre.dart';
+import 'dart:developer' as developer;
 
 class MovieService {
   final Dio _dio;
@@ -246,18 +247,93 @@ class MovieService {
   }
 
   Future<Map<String, dynamic>> getWatchProviders(int movieId) async {
-    return _retryRequest(() async {
+    print('=== MOVIE WATCH PROVIDERS ===');
+    print('Fetching watch providers for movie ID: $movieId');
+    try {
       final response = await _apiClient.get('/movie/$movieId/watch/providers');
+      print('Raw watch providers response: $response');
 
-      // Get US results or fall back to first available region
-      final results = response['results'] as Map<String, dynamic>;
-      if (results.containsKey('US')) {
-        return results['US'] as Map<String, dynamic>;
-      } else if (results.isNotEmpty) {
-        return results.values.first as Map<String, dynamic>;
+      // Add detailed logging of the response structure
+      if (response != null && response.isNotEmpty) {
+        print('\nDetailed watch providers response structure:');
+        if (response['results'] != null) {
+          final results = response['results'] as Map<String, dynamic>;
+          print('\nAvailable regions: ${results.keys.join(', ')}');
+          if (results.containsKey('US')) {
+            final usData = results['US'];
+            print('\nUS data structure:');
+            print('Available fields: ${usData.keys.join(', ')}');
+
+            // Log flatrate (streaming) providers
+            if (usData['flatrate'] != null) {
+              print('\n=== STREAMING PROVIDERS ===');
+              for (var provider in usData['flatrate']) {
+                print('\nProvider: ${provider['provider_name']}');
+                print('ID: ${provider['provider_id']}');
+                print('Logo: ${provider['logo_path']}');
+                print('Priority: ${provider['display_priority']}');
+                print('All available fields: ${provider.keys.join(', ')}');
+                print('Raw provider data: $provider');
+              }
+            }
+
+            // Log rent providers
+            if (usData['rent'] != null) {
+              print('\n=== RENT PROVIDERS ===');
+              for (var provider in usData['rent']) {
+                print('\nProvider: ${provider['provider_name']}');
+                print('ID: ${provider['provider_id']}');
+                print('Logo: ${provider['logo_path']}');
+                print('Priority: ${provider['display_priority']}');
+                print('All available fields: ${provider.keys.join(', ')}');
+                print('Raw provider data: $provider');
+              }
+            }
+
+            // Log buy providers
+            if (usData['buy'] != null) {
+              print('\n=== BUY PROVIDERS ===');
+              for (var provider in usData['buy']) {
+                print('\nProvider: ${provider['provider_name']}');
+                print('ID: ${provider['provider_id']}');
+                print('Logo: ${provider['logo_path']}');
+                print('Priority: ${provider['display_priority']}');
+                print('All available fields: ${provider.keys.join(', ')}');
+                print('Raw provider data: $provider');
+              }
+            }
+
+            // Log free providers
+            if (usData['free'] != null) {
+              print('\n=== FREE PROVIDERS ===');
+              for (var provider in usData['free']) {
+                print('\nProvider: ${provider['provider_name']}');
+                print('ID: ${provider['provider_id']}');
+                print('Logo: ${provider['logo_path']}');
+                print('Priority: ${provider['display_priority']}');
+                print('All available fields: ${provider.keys.join(', ')}');
+                print('Raw provider data: $provider');
+              }
+            }
+
+            print('\nGeneral TMDB link: ${usData['link']}');
+          }
+        }
       }
-      return {};
-    });
+
+      if (response == null || response.isEmpty) {
+        print('Empty response received for watch providers');
+        return {
+          'results': {}
+        }; // Return empty results structure instead of empty map
+      }
+
+      // Return the complete response structure
+      return response;
+    } catch (e) {
+      print('Error fetching watch providers: $e');
+      return {'results': {}}; // Return empty results structure on error
+    }
   }
 
   Future<List<Genre>> getGenres() async {
