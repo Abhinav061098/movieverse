@@ -103,7 +103,7 @@ class TvService {
     try {
       final response = await _apiClient.get(
         '/tv/$tvId',
-        queryParameters: {'append_to_response': 'videos,credits'},
+        queryParameters: {'append_to_response': 'videos,credits,external_ids'},
       );
 
       // Log the seasons data for debugging

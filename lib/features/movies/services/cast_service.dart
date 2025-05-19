@@ -9,7 +9,7 @@ class CastService {
     final response = await apiClient.get(
       '/person/$castId',
       queryParameters: {
-        'append_to_response': 'movie_credits,tv_credits',
+        'append_to_response': 'movie_credits,tv_credits,external_ids',
       },
     );
     return Cast.fromJson(response);

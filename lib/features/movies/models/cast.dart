@@ -16,6 +16,8 @@ class Cast {
   final String? placeOfBirth;
   final List<Movie>? movies;
   final List<TvShow>? tvShows;
+  @JsonKey(name: 'external_ids')
+  final ExternalIds? externalIds;
 
   Cast({
     required this.id,
@@ -26,6 +28,7 @@ class Cast {
     this.placeOfBirth,
     this.movies,
     this.tvShows,
+    this.externalIds,
   });
 
   factory Cast.fromJson(Map<String, dynamic> json) {
@@ -51,6 +54,9 @@ class Cast {
       placeOfBirth: json['place_of_birth'],
       movies: movies,
       tvShows: tvShows,
+      externalIds: json['external_ids'] != null
+          ? ExternalIds.fromJson(json['external_ids'])
+          : null,
     );
   }
 
@@ -58,4 +64,27 @@ class Cast {
 
   String get fullProfilePath =>
       profilePath != null ? 'https://image.tmdb.org/t/p/w500$profilePath' : '';
+}
+
+@JsonSerializable()
+class ExternalIds {
+  @JsonKey(name: 'instagram_id')
+  final String? instagramId;
+  @JsonKey(name: 'twitter_id')
+  final String? twitterId;
+  @JsonKey(name: 'facebook_id')
+  final String? facebookId;
+  @JsonKey(name: 'imdb_id')
+  final String? imdbId;
+
+  ExternalIds({
+    this.instagramId,
+    this.twitterId,
+    this.facebookId,
+    this.imdbId,
+  });
+
+  factory ExternalIds.fromJson(Map<String, dynamic> json) =>
+      _$ExternalIdsFromJson(json);
+  Map<String, dynamic> toJson() => _$ExternalIdsToJson(this);
 }

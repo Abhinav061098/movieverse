@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:movieverse/core/api/api_client.dart' as api;
 import '../../models/cast.dart';
 import '../../services/cast_service.dart';
 import '../widgets/cast_director_shimmer_widgets.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CastScreen extends StatefulWidget {
   final int castId;
@@ -286,6 +288,42 @@ class _ModernCollapsibleCastViewState
                                 ),
                               ),
                             ),
+                          if (cast.externalIds != null && infoFade > 0)
+                            Opacity(
+                              opacity: infoFade,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    if (cast.externalIds?.instagramId != null)
+                                      _buildSocialButton(
+                                        'https://instagram.com/${cast.externalIds!.instagramId}',
+                                        FontAwesomeIcons.instagram,
+                                        const Color(0xFFE1306C),
+                                      ),
+                                    if (cast.externalIds?.twitterId != null)
+                                      _buildSocialButton(
+                                        'https://twitter.com/${cast.externalIds!.twitterId}',
+                                        FontAwesomeIcons.twitter,
+                                        const Color(0xFF1DA1F2),
+                                      ),
+                                    if (cast.externalIds?.facebookId != null)
+                                      _buildSocialButton(
+                                        'https://facebook.com/${cast.externalIds!.facebookId}',
+                                        Icons.facebook,
+                                        const Color(0xFF4267B2),
+                                      ),
+                                    if (cast.externalIds?.imdbId != null)
+                                      _buildSocialButton(
+                                        'https://imdb.com/name/${cast.externalIds!.imdbId}',
+                                        FontAwesomeIcons.imdb,
+                                        const Color(0xFFF5C518),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -339,6 +377,34 @@ class _ModernCollapsibleCastViewState
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSocialButton(String url, IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 16.0),
+      child: InkWell(
+        onTap: () async {
+          try {
+            final uri = Uri.parse(url);
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(
+                uri,
+                mode: LaunchMode.externalNonBrowserApplication,
+              );
+            } else {
+              // Fallback to browser if app launch fails
+              await launchUrl(
+                uri,
+                mode: LaunchMode.externalApplication,
+              );
+            }
+          } catch (e) {
+            debugPrint('Error launching URL: $e');
+          }
+        },
+        child: Icon(icon, color: color, size: 24),
+      ),
     );
   }
 }

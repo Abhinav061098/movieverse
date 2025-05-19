@@ -20,6 +20,11 @@ MovieDetails _$MovieDetailsFromJson(Map<String, dynamic> json) => MovieDetails(
           .toList(),
       credits: Credits.fromJson(json['credits'] as Map<String, dynamic>),
       videos: VideoResponse.fromJson(json['videos'] as Map<String, dynamic>),
+      imdbId: json['imdb_id'] as String?,
+      homepage: json['homepage'] as String?,
+      externalIds: json['external_ids'] == null
+          ? null
+          : ExternalIds.fromJson(json['external_ids'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$MovieDetailsToJson(MovieDetails instance) =>
@@ -35,4 +40,7 @@ Map<String, dynamic> _$MovieDetailsToJson(MovieDetails instance) =>
       'genres': instance.genres,
       'credits': instance.credits,
       'videos': instance.videos,
+      'imdb_id': instance.imdbId,
+      'homepage': instance.homepage,
+      'external_ids': instance.externalIds,
     };

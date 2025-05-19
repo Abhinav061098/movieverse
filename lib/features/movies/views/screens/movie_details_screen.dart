@@ -13,8 +13,8 @@ import '../../services/movie_service.dart';
 import '../../services/favorites_service.dart';
 import '../widgets/add_to_watchlist_dialog.dart';
 import '../widgets/smart_recommendations_widget.dart';
-import '../widgets/detail_shimmer_widgets.dart';
 import 'cast_screen.dart';
+import 'media_social_screen.dart';
 
 class MovieDetailsScreen extends StatefulWidget {
   final int movieId;
@@ -169,66 +169,12 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
       body: FutureBuilder<MovieDetails>(
         future: _movieDetailsFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  expandedHeight: MediaQuery.of(context).size.height * 0.6,
-                  pinned: true,
-                  flexibleSpace: const ShimmerDetailHeader(),
-                ),
-                const SliverToBoxAdapter(
-                  child: ShimmerDetailInfo(),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const ShimmerCreditsSection(),
-                        const SizedBox(height: 24),
-                        Container(
-                          width: 100,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[850],
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 180,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: 5,
-                            itemBuilder: (context, index) =>
-                                const ShimmerCastCard(),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        const SmartRecommendationsWidget(isMovie: true),
-                        const SizedBox(height: 16),
-                        const ShimmerCreditsSection(),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
-          }
-
           if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error: ${snapshot.error}',
-                style: const TextStyle(color: Colors.red),
-              ),
-            );
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
 
           if (!snapshot.hasData) {
-            return const Center(child: Text('No data available'));
+            return const Center(child: CircularProgressIndicator());
           }
 
           final movie = snapshot.data!;
@@ -390,7 +336,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                             ElevatedButton.icon(
                               onPressed: () => _launchTrailer(movie),
                               icon: const Icon(Icons.play_arrow),
-                              label: const Text('Watch Trailer'),
+                              label: const Text('Trailer'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red,
                                 foregroundColor: Colors.white,
@@ -403,7 +349,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                                 ),
                               ),
                             ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
                           FutureBuilder<Map<String, dynamic>>(
                             future: _watchProvidersFuture,
                             builder: (context, snapshot) {
@@ -435,6 +381,36 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                                 ),
                               );
                             },
+                          ),
+                          const SizedBox(width: 8),
+                          // Add the new Social & Discussion button here
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MediaSocialScreen(
+                                    media: movie,
+                                    imdbId: movie.imdbId,
+                                    homepage: movie.homepage,
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.forum),
+                            label: const Text('Review'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  const Color.fromARGB(255, 170, 155, 24),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -469,11 +445,6 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen>
                       const SizedBox(height: 16),
                       // Smart Recommendations
                       const SmartRecommendationsWidget(isMovie: true),
-                      SizedBox(
-                        height: 16,
-                      ),
-                      MovieDiscussionWidget(
-                          mediaItem: MediaItem.fromMovieDetails(movie)),
                       const SizedBox(height: 24),
                     ],
                   ),

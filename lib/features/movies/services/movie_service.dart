@@ -185,7 +185,9 @@ class MovieService {
     return _retryRequest(() async {
       final response = await _apiClient.get(
         '/movie/$movieId',
-        queryParameters: {'append_to_response': 'videos,credits,release_dates'},
+        queryParameters: {
+          'append_to_response': 'videos,credits,release_dates,external_ids'
+        },
       );
       return MovieDetails.fromJson(response);
     });

@@ -5,6 +5,7 @@ import 'package:movieverse/features/movies/models/video_response.dart';
 import '../../../core/api/api_constants.dart';
 import 'movie_trailer.dart';
 import 'credits.dart';
+import 'external_ids.dart';
 
 part 'movie_details.g.dart';
 
@@ -26,6 +27,11 @@ class MovieDetails extends Equatable {
   final Credits credits;
   @JsonKey(name: 'videos')
   final VideoResponse videos;
+  @JsonKey(name: 'imdb_id')
+  final String? imdbId;
+  final String? homepage;
+  @JsonKey(name: 'external_ids')
+  final ExternalIds? externalIds;
   @JsonKey(ignore: true)
   final DateTime? lastUpdated;
 
@@ -41,6 +47,9 @@ class MovieDetails extends Equatable {
     required this.genres,
     required this.credits,
     required this.videos,
+    this.imdbId,
+    this.homepage,
+    this.externalIds,
     this.lastUpdated,
   });
 
@@ -56,6 +65,9 @@ class MovieDetails extends Equatable {
     List<Genre>? genres,
     Credits? credits,
     VideoResponse? videos,
+    String? imdbId,
+    String? homepage,
+    ExternalIds? externalIds,
     DateTime? lastUpdated,
   }) {
     return MovieDetails(
@@ -70,6 +82,9 @@ class MovieDetails extends Equatable {
       genres: genres ?? this.genres,
       credits: credits ?? this.credits,
       videos: videos ?? this.videos,
+      imdbId: imdbId ?? this.imdbId,
+      homepage: homepage ?? this.homepage,
+      externalIds: externalIds ?? this.externalIds,
       lastUpdated: lastUpdated ?? this.lastUpdated,
     );
   }
@@ -115,6 +130,9 @@ class MovieDetails extends Equatable {
         genres,
         credits,
         videos,
+        imdbId,
+        homepage,
+        externalIds,
         lastUpdated,
       ];
 }

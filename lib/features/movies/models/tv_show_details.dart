@@ -6,6 +6,7 @@ import 'credits.dart';
 import 'video_response.dart';
 import 'season.dart';
 import 'movie_trailer.dart';
+import 'external_ids.dart';
 
 part 'tv_show_details.g.dart';
 
@@ -31,6 +32,9 @@ class TvShowDetails extends Equatable {
   final VideoResponse videos;
   @JsonKey(name: 'seasons')
   final List<Season> seasons;
+  @JsonKey(name: 'external_ids')
+  final ExternalIds? externalIds;
+  final String? homepage;
 
   const TvShowDetails({
     required this.id,
@@ -45,6 +49,8 @@ class TvShowDetails extends Equatable {
     required this.credits,
     required this.videos,
     required this.seasons,
+    this.externalIds,
+    this.homepage,
   });
 
   String get fullPosterPath =>
@@ -53,14 +59,13 @@ class TvShowDetails extends Equatable {
   String get fullBackdropPath =>
       backdropPath != null ? ApiConstants.imageUrlOriginal + backdropPath! : '';
 
-  List<MovieTrailer> get trailers =>
-      videos.results
-          .where(
-            (video) =>
-                video.site.toLowerCase() == 'youtube' &&
-                video.type.toLowerCase() == 'trailer',
-          )
-          .toList();
+  List<MovieTrailer> get trailers => videos.results
+      .where(
+        (video) =>
+            video.site.toLowerCase() == 'youtube' &&
+            video.type.toLowerCase() == 'trailer',
+      )
+      .toList();
 
   factory TvShowDetails.fromJson(Map<String, dynamic> json) =>
       _$TvShowDetailsFromJson(json);
@@ -69,17 +74,19 @@ class TvShowDetails extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    title,
-    posterPath,
-    backdropPath,
-    overview,
-    firstAirDate,
-    voteAverage,
-    numberOfSeasons,
-    genres,
-    credits,
-    videos,
-    seasons,
-  ];
+        id,
+        title,
+        posterPath,
+        backdropPath,
+        overview,
+        firstAirDate,
+        voteAverage,
+        numberOfSeasons,
+        genres,
+        credits,
+        videos,
+        seasons,
+        externalIds,
+        homepage,
+      ];
 }

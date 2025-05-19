@@ -12,60 +12,81 @@ class TrailerCarousel extends StatefulWidget {
   State<TrailerCarousel> createState() => _TrailerCarouselState();
 }
 
-class _TrailerCarouselState extends State<TrailerCarousel> {
+class _TrailerCarouselState extends State<TrailerCarousel>
+    with AutomaticKeepAliveClientMixin {
   late final PageController _pageController;
   YoutubePlayerController? _activeController;
   int _currentIndex = 0;
+  bool _isInitialized = false;
+  bool _isDisposed = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
-    _initializePlayer(_currentIndex);
+    _pageController = PageController(initialPage: 0);
+    _initializePlayer(0);
   }
 
   Future<void> _initializePlayer(int index) async {
-    if (index < 0 || index >= widget.trailers.length) return;
+    if (index < 0 || index >= widget.trailers.length || _isDisposed) return;
 
     // Dispose previous controller if exists
     await _activeController?.close();
 
     // Create new controller with a slight delay to prevent frame drops
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 100));
 
-    // Create new controller
-    _activeController = YoutubePlayerController.fromVideoId(
-      videoId: widget.trailers[index].videoId,
-      params: const YoutubePlayerParams(
-        showControls: true,
-        showFullscreenButton: true,
-        enableJavaScript: true,
-        playsInline: true,
-      ),
-    );
+    if (!mounted || _isDisposed) return;
 
-    // Add listener for video state
-    _activeController?.listen((event) {
-      if (event.playerState == PlayerState.ended) {
-        final nextIndex = (_currentIndex + 1) % widget.trailers.length;
-        _pageController.animateToPage(
-          nextIndex,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+    try {
+      // Create new controller
+      _activeController = YoutubePlayerController.fromVideoId(
+        videoId: widget.trailers[index].videoId,
+        params: const YoutubePlayerParams(
+          showControls: true,
+          showFullscreenButton: true,
+          enableJavaScript: true,
+          playsInline: true,
+          showVideoAnnotations: false,
+        ),
+      );
+
+      // Add listener for video state
+      _activeController?.listen((event) {
+        if (event.playerState == PlayerState.ended && mounted && !_isDisposed) {
+          final nextIndex = (_currentIndex + 1) % widget.trailers.length;
+          _pageController.animateToPage(
+            nextIndex,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+
+      if (mounted && !_isDisposed) {
+        setState(() {
+          _isInitialized = true;
+        });
       }
-    });
-
-    if (mounted) {
-      setState(() {});
+    } catch (e) {
+      debugPrint('Error initializing player: $e');
+      if (mounted && !_isDisposed) {
+        setState(() {
+          _isInitialized = false;
+        });
+      }
     }
   }
 
   void _handlePageChange(int index) async {
-    if (_currentIndex == index) return;
+    if (_currentIndex == index || _isDisposed) return;
 
     setState(() {
       _currentIndex = index;
+      _isInitialized = false;
     });
 
     await _initializePlayer(index);
@@ -73,6 +94,7 @@ class _TrailerCarouselState extends State<TrailerCarousel> {
 
   @override
   void dispose() {
+    _isDisposed = true;
     _activeController?.close();
     _pageController.dispose();
     super.dispose();
@@ -80,6 +102,8 @@ class _TrailerCarouselState extends State<TrailerCarousel> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     if (widget.trailers.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -115,43 +139,30 @@ class _TrailerCarouselState extends State<TrailerCarousel> {
               final trailer = widget.trailers[index];
               final isActive = index == _currentIndex;
 
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // Thumbnail
-                        CachedNetworkImage(
-                          imageUrl:
-                              'https://img.youtube.com/vi/${trailer.videoId}/maxresdefault.jpg',
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: Colors.black,
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: Colors.black54,
-                            child: const Icon(
-                              Icons.error,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        // YouTube Player
-                        if (isActive && _activeController != null)
-                          YoutubePlayer(
-                            controller: _activeController!,
-                            aspectRatio: 16 / 9,
-                          ),
-                      ],
+              if (!isActive || !_isInitialized) {
+                return CachedNetworkImage(
+                  imageUrl:
+                      'https://img.youtube.com/vi/${trailer.videoId}/maxresdefault.jpg',
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey[900],
+                    child: const Center(
+                      child: CircularProgressIndicator(),
                     ),
                   ),
-                ],
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.grey[900],
+                    child: const Icon(Icons.error),
+                  ),
+                );
+              }
+
+              return YoutubePlayerScaffold(
+                controller: _activeController!,
+                aspectRatio: 16 / 9,
+                builder: (context, player) {
+                  return player;
+                },
               );
             },
           ),

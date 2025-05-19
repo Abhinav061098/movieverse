@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:movieverse/core/api/api_client.dart';
 import 'package:movieverse/features/movies/models/media_item.dart';
+import 'package:movieverse/features/movies/views/screens/media_social_screen.dart';
 import 'package:movieverse/features/movies/views/widgets/movie_discussion_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
@@ -516,7 +517,7 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
                             ElevatedButton.icon(
                               onPressed: () => _launchTrailer(show),
                               icon: const Icon(Icons.play_arrow),
-                              label: const Text('Watch Trailer'),
+                              label: const Text('Trailer'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red,
                                 foregroundColor: Colors.white,
@@ -561,6 +562,35 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
                                 ),
                               );
                             },
+                          ),
+                          const SizedBox(width: 12),
+                          // Add the new Social & Discussion button here
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MediaSocialScreen(
+                                    media: show,
+                                    imdbId: show.externalIds?.imdbId,
+                                    homepage: show.homepage,
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.forum),
+                            label: const Text('Reviews'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purple,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                            ),
                           ),
                         ],
                       ),

@@ -24,6 +24,10 @@ TvShowDetails _$TvShowDetailsFromJson(Map<String, dynamic> json) =>
       seasons: (json['seasons'] as List<dynamic>)
           .map((e) => Season.fromJson(e as Map<String, dynamic>))
           .toList(),
+      externalIds: json['external_ids'] == null
+          ? null
+          : ExternalIds.fromJson(json['external_ids'] as Map<String, dynamic>),
+      homepage: json['homepage'] as String?,
     );
 
 Map<String, dynamic> _$TvShowDetailsToJson(TvShowDetails instance) =>
@@ -40,4 +44,6 @@ Map<String, dynamic> _$TvShowDetailsToJson(TvShowDetails instance) =>
       'credits': instance.credits,
       'videos': instance.videos,
       'seasons': instance.seasons,
+      'external_ids': instance.externalIds,
+      'homepage': instance.homepage,
     };
