@@ -26,6 +26,8 @@ class MovieDetails extends Equatable {
   final Credits credits;
   @JsonKey(name: 'videos')
   final VideoResponse videos;
+  @JsonKey(ignore: true)
+  final DateTime? lastUpdated;
 
   const MovieDetails({
     required this.id,
@@ -39,7 +41,38 @@ class MovieDetails extends Equatable {
     required this.genres,
     required this.credits,
     required this.videos,
+    this.lastUpdated,
   });
+
+  MovieDetails copyWith({
+    int? id,
+    String? title,
+    String? posterPath,
+    String? backdropPath,
+    String? overview,
+    String? releaseDate,
+    double? voteAverage,
+    int? runtime,
+    List<Genre>? genres,
+    Credits? credits,
+    VideoResponse? videos,
+    DateTime? lastUpdated,
+  }) {
+    return MovieDetails(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      posterPath: posterPath ?? this.posterPath,
+      backdropPath: backdropPath ?? this.backdropPath,
+      overview: overview ?? this.overview,
+      releaseDate: releaseDate ?? this.releaseDate,
+      voteAverage: voteAverage ?? this.voteAverage,
+      runtime: runtime ?? this.runtime,
+      genres: genres ?? this.genres,
+      credits: credits ?? this.credits,
+      videos: videos ?? this.videos,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+    );
+  }
 
   String get fullPosterPath =>
       posterPath != null ? ApiConstants.imageUrlOriginal + posterPath! : '';
@@ -56,14 +89,13 @@ class MovieDetails extends Equatable {
     return '${minutes}m';
   }
 
-  List<MovieTrailer> get trailers =>
-      videos.results
-          .where(
-            (video) =>
-                video.site.toLowerCase() == 'youtube' &&
-                video.type.toLowerCase() == 'trailer',
-          )
-          .toList();
+  List<MovieTrailer> get trailers => videos.results
+      .where(
+        (video) =>
+            video.site.toLowerCase() == 'youtube' &&
+            video.type.toLowerCase() == 'trailer',
+      )
+      .toList();
 
   factory MovieDetails.fromJson(Map<String, dynamic> json) =>
       _$MovieDetailsFromJson(json);
@@ -72,16 +104,17 @@ class MovieDetails extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    title,
-    posterPath,
-    backdropPath,
-    overview,
-    releaseDate,
-    voteAverage,
-    runtime,
-    genres,
-    credits,
-    videos,
-  ];
+        id,
+        title,
+        posterPath,
+        backdropPath,
+        overview,
+        releaseDate,
+        voteAverage,
+        runtime,
+        genres,
+        credits,
+        videos,
+        lastUpdated,
+      ];
 }

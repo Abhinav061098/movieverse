@@ -12,6 +12,8 @@ import '../widgets/trailer_carousel.dart';
 import '../screens/favorites_screen.dart';
 import '../screens/watchlist_screen.dart';
 import '../../../../core/auth/screens/profile_screen.dart';
+import '../widgets/shimmer_widgets.dart';
+import '../widgets/mood_movies_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -36,13 +38,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Consumer2<MovieViewModel, TvShowViewModel>(
       builder: (context, movieViewModel, tvShowViewModel, child) {
-        if (movieViewModel.state == MovieListState.loading ||
-            tvShowViewModel.state == TvShowListState.loading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
         if (movieViewModel.state == MovieListState.error ||
             tvShowViewModel.state == TvShowListState.error) {
           return Scaffold(
@@ -51,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Movie Error: \\n${movieViewModel.error}\n\nTV Show Error: \\n${tvShowViewModel.error}',
+                    'Movie Error: \n${movieViewModel.error}\n\nTV Show Error: \n${tvShowViewModel.error}',
                     style: const TextStyle(color: Colors.red),
                     textAlign: TextAlign.center,
                   ),
@@ -87,15 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          body: IndexedStack(
-            index: _currentIndex,
-            children: [
-              _buildMoviesTab(movieViewModel),
-              _buildTvShowsTab(tvShowViewModel),
-              const FavoritesScreen(),
-              const WatchlistScreen(),
-            ],
-          ),
+          body: _buildCurrentTab(movieViewModel, tvShowViewModel),
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _currentIndex,
             onTap: (index) {
@@ -128,6 +115,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildCurrentTab(
+      MovieViewModel movieViewModel, TvShowViewModel tvShowViewModel) {
+    switch (_currentIndex) {
+      case 0:
+        return _buildMoviesTab(movieViewModel);
+      case 1:
+        return _buildTvShowsTab(tvShowViewModel);
+      case 2:
+        return const FavoritesScreen();
+      case 3:
+        return const WatchlistScreen();
+      default:
+        return _buildMoviesTab(movieViewModel);
+    }
+  }
+
   Widget _buildMoviesTab(MovieViewModel movieViewModel) {
     return RefreshIndicator(
       onRefresh: () {
@@ -137,6 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
+            // Movie of the Day
             if (movieViewModel.movieOfTheDay != null)
               MovieOfTheDayCard(
                 movie: movieViewModel.movieOfTheDay!,
@@ -150,73 +154,170 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
                 },
-              ),
-            GenreChips(
-              genres: movieViewModel.genres,
-              selectedGenreId: movieViewModel.selectedGenreId,
-              onGenreSelected: movieViewModel.setSelectedGenre,
-            ),
+              )
+            else
+              const ShimmerMovieOfTheDay(),
             const SizedBox(height: 16),
-            MediaSectionList(
-              title: 'Popular Movies',
-              mediaList: movieViewModel.filteredPopularMovies,
-              isLoadingMore: movieViewModel.isLoadingMorePopularMovies,
-              onLoadMore: movieViewModel.loadMorePopularMovies,
-              onMediaTap: (media) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MovieDetailsScreen(movieId: media.id),
+
+            // Genres
+            if (movieViewModel.genres.isNotEmpty)
+              GenreChips(
+                genres: movieViewModel.genres,
+                selectedGenreId: movieViewModel.selectedGenreId,
+                onGenreSelected: movieViewModel.setSelectedGenre,
+              )
+            else
+              const ShimmerSectionTitle(),
+
+            const SizedBox(height: 16),
+
+            // Popular Movies
+            if (movieViewModel.popularMovies.isNotEmpty)
+              MediaSectionList(
+                title: 'Popular Movies',
+                mediaList: movieViewModel.filteredPopularMovies,
+                isLoadingMore: movieViewModel.isLoadingMorePopularMovies,
+                onLoadMore: movieViewModel.loadMorePopularMovies,
+                onMediaTap: (media) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MovieDetailsScreen(movieId: media.id),
+                    ),
+                  );
+                },
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ShimmerSectionTitle(),
+                  SizedBox(
+                    height: 286,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 5,
+                      itemBuilder: (context, index) => const ShimmerMovieCard(),
+                    ),
                   ),
-                );
-              },
-            ),
-            MediaSectionList(
-              title: 'Top Rated Movies',
-              mediaList: movieViewModel.filteredTopRatedMovies,
-              isLoadingMore: movieViewModel.isLoadingMoreTopRatedMovies,
-              onLoadMore: movieViewModel.loadMoreTopRatedMovies,
-              onMediaTap: (media) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MovieDetailsScreen(movieId: media.id),
+                ],
+              ),
+
+            // Top Rated Movies
+            if (movieViewModel.topRatedMovies.isNotEmpty)
+              MediaSectionList(
+                title: 'Top Rated Movies',
+                mediaList: movieViewModel.filteredTopRatedMovies,
+                isLoadingMore: movieViewModel.isLoadingMoreTopRatedMovies,
+                onLoadMore: movieViewModel.loadMoreTopRatedMovies,
+                onMediaTap: (media) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MovieDetailsScreen(movieId: media.id),
+                    ),
+                  );
+                },
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ShimmerSectionTitle(),
+                  SizedBox(
+                    height: 286,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 5,
+                      itemBuilder: (context, index) => const ShimmerMovieCard(),
+                    ),
                   ),
-                );
-              },
-            ),
-            MediaSectionList(
-              title: 'Upcoming Movies',
-              mediaList: movieViewModel.filteredUpcomingMovies,
-              isLoadingMore: movieViewModel.isLoadingMoreUpcomingMovies,
-              onLoadMore: movieViewModel.loadMoreUpcomingMovies,
-              onMediaTap: (media) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MovieDetailsScreen(movieId: media.id),
+                ],
+              ),
+
+            // Upcoming Movies
+            if (movieViewModel.upcomingMovies.isNotEmpty)
+              MediaSectionList(
+                title: 'Upcoming Movies',
+                mediaList: movieViewModel.filteredUpcomingMovies,
+                isLoadingMore: movieViewModel.isLoadingMoreUpcomingMovies,
+                onLoadMore: movieViewModel.loadMoreUpcomingMovies,
+                onMediaTap: (media) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MovieDetailsScreen(movieId: media.id),
+                    ),
+                  );
+                },
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ShimmerSectionTitle(),
+                  SizedBox(
+                    height: 286,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 5,
+                      itemBuilder: (context, index) => const ShimmerMovieCard(),
+                    ),
                   ),
-                );
-              },
-            ),
+                ],
+              ),
+
+            // Trailers
             if (movieViewModel.trailers.isNotEmpty)
-              TrailerCarousel(trailers: movieViewModel.trailers),
-            const SizedBox(height: 16),
-            DirectorsWidget(
-              directors: movieViewModel.popularDirectors,
-              title: 'Directors',
-              isLoading: movieViewModel.state == MovieListState.loading &&
-                  movieViewModel.popularDirectors.isEmpty,
-              onSeeAllPressed: () {
-                movieViewModel.loadMoreDirectors();
-              },
-            ),
-            if (movieViewModel.state == MovieListState.loading &&
-                movieViewModel.popularDirectors.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: CircularProgressIndicator()),
+              TrailerCarousel(trailers: movieViewModel.trailers)
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ShimmerSectionTitle(),
+                  SizedBox(
+                    height: 200,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 3,
+                      itemBuilder: (context, index) =>
+                          const ShimmerTrailerCard(),
+                    ),
+                  ),
+                ],
               ),
+
+            const SizedBox(height: 16),
+
+            // Directors
+            if (movieViewModel.popularDirectors.isNotEmpty)
+              DirectorsWidget(
+                directors: movieViewModel.popularDirectors,
+                title: 'Directors',
+                isLoading: movieViewModel.state == MovieListState.loading &&
+                    movieViewModel.popularDirectors.isEmpty,
+                onSeeAllPressed: () {
+                  movieViewModel.loadMoreDirectors();
+                },
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ShimmerSectionTitle(),
+                  SizedBox(
+                    height: 180,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 5,
+                      itemBuilder: (context, index) =>
+                          const ShimmerDirectorCard(),
+                    ),
+                  ),
+                ],
+              ),
+            const MoodMoviesWidget(),
+
             const SizedBox(height: 38),
           ],
         ),
@@ -233,69 +334,149 @@ class _HomeScreenState extends State<HomeScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
-            GenreChips(
-              genres: tvShowViewModel.genres,
-              selectedGenreId: tvShowViewModel.selectedGenreId,
-              onGenreSelected: tvShowViewModel.setSelectedGenre,
-            ),
+            // Genres
+            if (tvShowViewModel.genres.isNotEmpty)
+              GenreChips(
+                genres: tvShowViewModel.genres,
+                selectedGenreId: tvShowViewModel.selectedGenreId,
+                onGenreSelected: tvShowViewModel.setSelectedGenre,
+              )
+            else
+              const ShimmerSectionTitle(),
+
             const SizedBox(height: 16),
-            MediaSectionList(
-              title: 'Popular TV Shows',
-              mediaList: tvShowViewModel.filteredPopularTvShows,
-              isLoadingMore: tvShowViewModel.isLoadingMorePopularTvShows,
-              onLoadMore: tvShowViewModel.loadMorePopularTvShows,
-              onMediaTap: (media) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => TvShowDetailsScreen(tvShowId: media.id),
+
+            // Popular TV Shows
+            if (tvShowViewModel.popularTvShows.isNotEmpty)
+              MediaSectionList(
+                title: 'Popular TV Shows',
+                mediaList: tvShowViewModel.filteredPopularTvShows,
+                isLoadingMore: tvShowViewModel.isLoadingMorePopularTvShows,
+                onLoadMore: tvShowViewModel.loadMorePopularTvShows,
+                onMediaTap: (media) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TvShowDetailsScreen(tvShowId: media.id),
+                    ),
+                  );
+                },
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ShimmerSectionTitle(),
+                  SizedBox(
+                    height: 286,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 5,
+                      itemBuilder: (context, index) => const ShimmerMovieCard(),
+                    ),
                   ),
-                );
-              },
-            ),
-            MediaSectionList(
-              title: 'Top Rated TV Shows',
-              mediaList: tvShowViewModel.filteredTopRatedTvShows,
-              isLoadingMore: tvShowViewModel.isLoadingMoreTopRatedTvShows,
-              onLoadMore: tvShowViewModel.loadMoreTopRatedTvShows,
-              onMediaTap: (media) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => TvShowDetailsScreen(tvShowId: media.id),
+                ],
+              ),
+
+            // Top Rated TV Shows
+            if (tvShowViewModel.topRatedTvShows.isNotEmpty)
+              MediaSectionList(
+                title: 'Top Rated TV Shows',
+                mediaList: tvShowViewModel.filteredTopRatedTvShows,
+                isLoadingMore: tvShowViewModel.isLoadingMoreTopRatedTvShows,
+                onLoadMore: tvShowViewModel.loadMoreTopRatedTvShows,
+                onMediaTap: (media) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TvShowDetailsScreen(tvShowId: media.id),
+                    ),
+                  );
+                },
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ShimmerSectionTitle(),
+                  SizedBox(
+                    height: 286,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 5,
+                      itemBuilder: (context, index) => const ShimmerMovieCard(),
+                    ),
                   ),
-                );
-              },
-            ),
-            MediaSectionList(
-              title: 'Airing Today',
-              mediaList: tvShowViewModel.filteredAiringTodayShows,
-              isLoadingMore: tvShowViewModel.isLoadingMoreAiringTodayShows,
-              onLoadMore: tvShowViewModel.loadMoreAiringTodayShows,
-              onMediaTap: (media) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => TvShowDetailsScreen(tvShowId: media.id),
+                ],
+              ),
+
+            // Airing Today
+            if (tvShowViewModel.airingTodayShows.isNotEmpty)
+              MediaSectionList(
+                title: 'Airing Today',
+                mediaList: tvShowViewModel.filteredAiringTodayShows,
+                isLoadingMore: tvShowViewModel.isLoadingMoreAiringTodayShows,
+                onLoadMore: tvShowViewModel.loadMoreAiringTodayShows,
+                onMediaTap: (media) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TvShowDetailsScreen(tvShowId: media.id),
+                    ),
+                  );
+                },
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ShimmerSectionTitle(),
+                  SizedBox(
+                    height: 286,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 5,
+                      itemBuilder: (context, index) => const ShimmerMovieCard(),
+                    ),
                   ),
-                );
-              },
-            ),
-            MediaSectionList(
-              title: 'On The Air',
-              mediaList: tvShowViewModel.filteredOnTheAirShows,
-              isLoadingMore: tvShowViewModel.isLoadingMoreOnTheAirShows,
-              onLoadMore: tvShowViewModel.loadMoreOnTheAirShows,
-              onMediaTap: (media) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => TvShowDetailsScreen(tvShowId: media.id),
+                ],
+              ),
+
+            // On The Air
+            if (tvShowViewModel.onTheAirShows.isNotEmpty)
+              MediaSectionList(
+                title: 'On The Air',
+                mediaList: tvShowViewModel.filteredOnTheAirShows,
+                isLoadingMore: tvShowViewModel.isLoadingMoreOnTheAirShows,
+                onLoadMore: tvShowViewModel.loadMoreOnTheAirShows,
+                onMediaTap: (media) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TvShowDetailsScreen(tvShowId: media.id),
+                    ),
+                  );
+                },
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ShimmerSectionTitle(),
+                  SizedBox(
+                    height: 286,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 5,
+                      itemBuilder: (context, index) => const ShimmerMovieCard(),
+                    ),
                   ),
-                );
-              },
-            ),
+                ],
+              ),
+
             const SizedBox(height: 16),
+
+            // Directors
             if (tvShowViewModel.popularDirectors.isNotEmpty)
               DirectorsWidget(
                 directors: tvShowViewModel.popularDirectors,
@@ -303,7 +484,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 onSeeAllPressed: () {
                   tvShowViewModel.loadMoreDirectors();
                 },
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ShimmerSectionTitle(),
+                  SizedBox(
+                    height: 180,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 5,
+                      itemBuilder: (context, index) =>
+                          const ShimmerDirectorCard(),
+                    ),
+                  ),
+                ],
               ),
+
+            const SizedBox(height: 38),
           ],
         ),
       ),

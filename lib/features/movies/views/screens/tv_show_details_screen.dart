@@ -14,6 +14,7 @@ import '../../services/favorites_service.dart';
 import '../widgets/add_to_watchlist_dialog.dart';
 import 'package:movieverse/core/mixins/analytics_mixin.dart';
 import '../widgets/smart_recommendations_widget.dart';
+import '../widgets/detail_shimmer_widgets.dart';
 import 'cast_screen.dart';
 
 class TvShowDetailsScreen extends StatefulWidget {
@@ -305,12 +306,85 @@ class _TvShowDetailsScreenState extends State<TvShowDetailsScreen>
       body: FutureBuilder<TvShowDetails>(
         future: _tvShowDetailsFuture,
         builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: MediaQuery.of(context).size.height * 0.6,
+                  pinned: true,
+                  flexibleSpace: const ShimmerDetailHeader(),
+                ),
+                const SliverToBoxAdapter(
+                  child: ShimmerDetailInfo(),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const ShimmerCreditsSection(),
+                        const SizedBox(height: 24),
+                        Container(
+                          width: 100,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[850],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 180,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: 5,
+                            itemBuilder: (context, index) =>
+                                const ShimmerCastCard(),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Container(
+                          width: 150,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[850],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 200,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: 3,
+                            itemBuilder: (context, index) =>
+                                const ShimmerEpisodeCard(),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const SmartRecommendationsWidget(isMovie: false),
+                        const SizedBox(height: 16),
+                        const ShimmerCreditsSection(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: const TextStyle(color: Colors.red),
+              ),
+            );
           }
 
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: Text('No data available'));
           }
 
           final show = snapshot.data!;

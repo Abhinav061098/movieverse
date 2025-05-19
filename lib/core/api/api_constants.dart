@@ -7,6 +7,7 @@ class ApiConstants {
   static const String imageBaseUrl = 'https://image.tmdb.org/t/p/';
   static const String imageUrlW500 = '${imageBaseUrl}w500';
   static const String imageUrlOriginal = '${imageBaseUrl}original';
+  static const String tmdbImageBaseUrl = imageBaseUrl;
 
   // Movie Endpoints
   static const String popularMovies = '/movie/popular';

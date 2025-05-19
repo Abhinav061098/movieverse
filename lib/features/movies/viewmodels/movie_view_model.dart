@@ -37,6 +37,7 @@ class MovieViewModel with ChangeNotifier {
   bool _isLoadingMoreTopRatedMovies = false;
   bool _isLoadingMoreUpcomingMovies = false;
   bool _isLoadingMoreDirectors = false;
+  bool _isLoading = false;
 
   MovieViewModel(this._movieService, this._directorService);
 
@@ -76,21 +77,22 @@ class MovieViewModel with ChangeNotifier {
   bool get hasMoreTopRatedMovies => _hasMoreTopRatedMovies;
   bool get hasMoreUpcomingMovies => _hasMoreUpcomingMovies;
   bool get hasMoreDirectors => _hasMoreDirectors;
+  bool get isLoading => _isLoading;
 
   Future<void> loadInitialData() async {
     _state = MovieListState.loading;
     notifyListeners();
     try {
-      // First load all movie data
-      await Future.wait([
+      // Load movie of the day and movie data in parallel
+      final movieDataFutures = await Future.wait([
         _loadMovieOfTheDay(),
         _loadMovieData(),
         _loadLatestTrailers(),
         fetchGenres(),
       ]);
 
-      // Then load directors after we have the movies
-      await _loadPopularDirectors();
+      // Start loading directors immediately after getting movie data
+      _loadPopularDirectors();
 
       _state = MovieListState.loaded;
     } catch (e) {
@@ -122,7 +124,17 @@ class MovieViewModel with ChangeNotifier {
 
   Future<void> _loadMovieOfTheDay() async {
     try {
-      _movieOfTheDay = await _movieService.getMovieOfTheDay();
+      // Check if we have a cached movie of the day from today
+      final now = DateTime.now();
+      if (_movieOfTheDay != null &&
+          _movieOfTheDay!.lastUpdated != null &&
+          _movieOfTheDay!.lastUpdated!.year == now.year &&
+          _movieOfTheDay!.lastUpdated!.month == now.month &&
+          _movieOfTheDay!.lastUpdated!.day == now.day) {
+        return;
+      }
+      final movie = await _movieService.getMovieOfTheDay();
+      _movieOfTheDay = movie.copyWith(lastUpdated: now);
     } catch (e) {
       // ignore error
     }
@@ -237,7 +249,9 @@ class MovieViewModel with ChangeNotifier {
     }
     if (_isLoadingMoreDirectors || !_hasMoreDirectors) return;
     _isLoadingMoreDirectors = true;
-    debugPrint('Loading directors page: \\$_directorsPage');
+    debugPrint('Loading directors page: $_directorsPage');
+
+    // Create a map of unique movies
     final moviesMap = <int, Movie>{};
     for (var movie in _popularMovies.take(_directorsPerPage * _directorsPage)) {
       moviesMap[movie.id] = movie;
@@ -250,22 +264,28 @@ class MovieViewModel with ChangeNotifier {
         in _upcomingMovies.take(_directorsPerPage * _directorsPage)) {
       moviesMap[movie.id] = movie;
     }
+
     final allMovies = moviesMap.values.toList();
     if (allMovies.isEmpty) {
       debugPrint('No movies available to fetch directors');
       _isLoadingMoreDirectors = false;
       return;
     }
-    final directors = <Director>[];
-    for (var movie in allMovies) {
+
+    // Load directors for all movies in parallel
+    final directorFutures = allMovies.map((movie) async {
       try {
-        final movieDirectors =
-            await _directorService.getMovieDirectors(movie.id);
-        directors.addAll(movieDirectors);
+        return await _directorService.getMovieDirectors(movie.id);
       } catch (e) {
-        debugPrint('Error fetching directors for movie \\${movie.title}: \\$e');
+        debugPrint('Error fetching directors for movie ${movie.title}: $e');
+        return <Director>[];
       }
-    }
+    });
+
+    final directorsResults = await Future.wait(directorFutures);
+    final directors =
+        directorsResults.expand((directors) => directors).toList();
+
     final uniqueDirectors = directors
         .fold<Map<int, Director>>({}, (map, dir) {
           if (!map.containsKey(dir.id)) {
@@ -275,6 +295,7 @@ class MovieViewModel with ChangeNotifier {
         })
         .values
         .toList();
+
     final previousCount = _popularDirectors.length;
     _popularDirectors =
         uniqueDirectors.take(_directorsPerPage * _directorsPage).toList();
@@ -287,5 +308,10 @@ class MovieViewModel with ChangeNotifier {
     if (_isLoadingMoreDirectors || !_hasMoreDirectors) return;
     _directorsPage++;
     await _loadPopularDirectors();
+  }
+
+  void setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
   }
 }

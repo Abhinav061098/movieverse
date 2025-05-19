@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:movieverse/core/api/api_client.dart' as api;
 import '../../models/cast.dart';
 import '../../services/cast_service.dart';
+import '../widgets/cast_director_shimmer_widgets.dart';
 
 class CastScreen extends StatefulWidget {
   final int castId;
@@ -44,7 +45,33 @@ class _CastScreenState extends State<CastScreen> {
           future: _castFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return Column(
+                children: [
+                  ShimmerCastHeader(height: expandedHeaderHeight),
+                  const Divider(height: 0, thickness: 1, color: Colors.white12),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Column(
+                        children: [
+                          TabBar(
+                            indicatorColor: Colors.purpleAccent,
+                            labelColor: Colors.purpleAccent,
+                            unselectedLabelColor: Colors.white70,
+                            tabs: const [
+                              Tab(text: 'Movies'),
+                              Tab(text: 'TV Shows'),
+                            ],
+                          ),
+                          const Expanded(
+                            child: ShimmerMediaGrid(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
             }
             if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));

@@ -5,28 +5,88 @@ import '../screens/tv_show_details_screen.dart';
 import '../../models/director.dart';
 import '../../models/movie.dart';
 import '../../models/tv_show.dart';
+import '../../services/director_service.dart';
+import '../widgets/cast_director_shimmer_widgets.dart';
+import 'package:movieverse/core/api/api_client.dart' as api;
 
-class DirectorScreen extends StatelessWidget {
-  final Director director;
-  final List<Movie> movies;
-  final List<TvShow> tvShows;
-
+class DirectorScreen extends StatefulWidget {
+  final int directorId;
+  final String? name;
+  final String? profilePath;
   const DirectorScreen({
     super.key,
-    required this.director,
-    required this.movies,
-    required this.tvShows,
+    required this.directorId,
+    this.name,
+    this.profilePath,
   });
 
   @override
+  State<DirectorScreen> createState() => _DirectorScreenState();
+}
+
+class _DirectorScreenState extends State<DirectorScreen> {
+  late Future<Director> _directorFuture;
+  late DirectorService _directorService;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final apiClient = api.ApiClient();
+    _directorService = DirectorService(apiClient);
+    _directorFuture = _directorService.getDirectorDetails(widget.directorId);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final double collapsedHeaderHeight = screenHeight * 0.22;
+    final double expandedHeaderHeight = screenHeight * 0.45;
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        body: _CollapsibleDirectorView(
-          director: director,
-          movies: movies,
-          tvShows: tvShows,
+        backgroundColor: Colors.black,
+        body: FutureBuilder<Director>(
+          future: _directorFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Column(
+                children: [
+                  ShimmerDirectorHeader(height: expandedHeaderHeight),
+                  const Divider(height: 0, thickness: 1, color: Colors.white12),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Column(
+                        children: [
+                          TabBar(
+                            indicatorColor: Colors.purpleAccent,
+                            labelColor: Colors.purpleAccent,
+                            unselectedLabelColor: Colors.white70,
+                            tabs: const [
+                              Tab(text: 'Movies'),
+                              Tab(text: 'TV Shows'),
+                            ],
+                          ),
+                          const Expanded(
+                            child: ShimmerMediaGrid(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+            final director = snapshot.data!;
+            return _CollapsibleDirectorView(
+              director: director,
+              movies: director.movieCredits ?? [],
+              tvShows: director.tvCredits ?? [],
+            );
+          },
         ),
       ),
     );
@@ -119,20 +179,25 @@ class _CollapsibleDirectorViewState extends State<_CollapsibleDirectorView> {
         (_headerPercent * (expandedHeaderHeight - collapsedHeaderHeight)) +
             collapsedHeaderHeight;
 
-    // Calculate fade-out for info fields
+    // Calculate fade-out for info fields with smoother transitions
     double infoFade =
         (_headerPercent - minHeaderPercent) / (1.0 - minHeaderPercent);
     infoFade = infoFade.clamp(0.0, 1.0);
-    // For stepwise fade: born/place fade out first, then bio, then only name remains
-    double bornPlaceFade = (infoFade - 0.0) / 0.5; // fade out in first half
-    bornPlaceFade = bornPlaceFade.clamp(0.0, 1.0);
-    double bioFade = (infoFade - 0.5) / 0.5; // fade out in second half
-    bioFade = bioFade.clamp(0.0, 1.0);
+
+    // Ensure values stay within [0, 1] range before applying curve
+    double bornPlaceFade = ((infoFade - 0.0) / 0.5).clamp(0.0, 1.0);
+    double bioFade = ((infoFade - 0.5) / 0.5).clamp(0.0, 1.0);
+
+    // Apply curve after clamping
+    bornPlaceFade = Curves.easeInOut.transform(bornPlaceFade);
+    bioFade = Curves.easeInOut.transform(bioFade);
 
     return Column(
       children: [
         AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
+          duration: const Duration(
+              milliseconds: 200), // Increased duration for smoother animation
+          curve: Curves.easeInOut, // Added curve for smoother animation
           height: headerHeight,
           child: Row(
             children: [
@@ -178,15 +243,25 @@ class _CollapsibleDirectorViewState extends State<_CollapsibleDirectorView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        widget.director.name,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeInOut,
+                        style:
+                            Theme.of(context).textTheme.headlineSmall!.copyWith(
+                                  fontSize: 24 * _headerPercent +
+                                      18 * (1 - _headerPercent),
+                                ),
+                        child: Text(
+                          widget.director.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       if (widget.director.knownForDepartment != null &&
                           bioFade > 0)
-                        Opacity(
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeInOut,
                           opacity: bioFade,
                           child: Padding(
                             padding: const EdgeInsets.only(top: 4.0),
@@ -199,20 +274,24 @@ class _CollapsibleDirectorViewState extends State<_CollapsibleDirectorView> {
                       if (widget.director.biography != null &&
                           widget.director.biography!.isNotEmpty &&
                           bioFade > 0)
-                        Opacity(
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeInOut,
                           opacity: bioFade,
                           child: Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
                               widget.director.biography!,
-                              maxLines: 6,
+                              maxLines: (6 * _headerPercent).round(),
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(color: Colors.grey[300]),
                             ),
                           ),
                         ),
                       if (widget.director.birthday != null && bornPlaceFade > 0)
-                        Opacity(
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeInOut,
                           opacity: bornPlaceFade,
                           child: Padding(
                             padding: const EdgeInsets.only(top: 8.0),
@@ -221,7 +300,9 @@ class _CollapsibleDirectorViewState extends State<_CollapsibleDirectorView> {
                         ),
                       if (widget.director.placeOfBirth != null &&
                           bornPlaceFade > 0)
-                        Opacity(
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeInOut,
                           opacity: bornPlaceFade,
                           child: Padding(
                             padding: const EdgeInsets.only(top: 2.0),

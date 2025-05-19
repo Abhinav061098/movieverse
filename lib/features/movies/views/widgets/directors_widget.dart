@@ -75,9 +75,9 @@ class DirectorsWidget extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (_) => DirectorScreen(
-                              director: fullDirector,
-                              movies: movies,
-                              tvShows: tvShows,
+                              directorId: director.id,
+                              name: director.name,
+                              profilePath: director.profilePath,
                             ),
                           ),
                         );

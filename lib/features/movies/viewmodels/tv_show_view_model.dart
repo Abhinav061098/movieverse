@@ -37,6 +37,7 @@ class TvShowViewModel with ChangeNotifier {
   bool _isLoadingMoreAiringTodayShows = false;
   bool _isLoadingMoreOnTheAirShows = false;
   bool _isLoadingMoreDirectors = false;
+  bool _isLoading = false;
 
   TvShowViewModel(this._tvService, this._directorService);
 
@@ -54,6 +55,7 @@ class TvShowViewModel with ChangeNotifier {
   bool get isLoadingMoreAiringTodayShows => _isLoadingMoreAiringTodayShows;
   bool get isLoadingMoreOnTheAirShows => _isLoadingMoreOnTheAirShows;
   bool get isLoadingMoreDirectors => _isLoadingMoreDirectors;
+  bool get isLoading => _isLoading;
 
   List<TvShow> get filteredPopularTvShows => _selectedGenreId == null
       ? _popularTvShows
@@ -288,5 +290,10 @@ class TvShowViewModel with ChangeNotifier {
     if (_isLoadingMoreDirectors || !_hasMoreDirectors) return;
     _directorsPage++;
     await loadPopularDirectors();
+  }
+
+  void setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
   }
 }
