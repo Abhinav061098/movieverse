@@ -33,6 +33,30 @@ A modern Flutter application for browsing movies and TV shows, built with a beau
   - Dark theme
   - Smooth animations
 
+## Releases 📱
+
+### Latest Release
+- **Version**: 1.0.0
+- **Release Date**: March 2024
+- **Download**: [MovieVerse APK](https://github.com/Abhinav061098/movieverse/releases/download/v1.0.0/app-release.apk)
+- **Size**: 55.6 MB
+- **Minimum Android Version**: Android 5.0 (API level 21)
+
+### Installation
+1. Download the APK file
+2. Enable "Install from Unknown Sources" in your Android settings
+3. Open the APK file to install
+4. Launch MovieVerse and enjoy!
+
+### Release Notes
+- Initial release with all core features
+- Movie and TV show browsing
+- User authentication
+- Favorites and watchlist
+- Reviews and ratings
+- Cast and crew information
+- Social media integration
+
 ## Tech Stack 🛠
 
 - **Framework**: Flutter
