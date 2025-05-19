@@ -38,7 +38,7 @@ A modern Flutter application for browsing movies and TV shows, built with a beau
 ### Latest Release
 - **Version**: 1.0.0
 - **Release Date**: March 2024
-- **Download**: [MovieVerse APK](https://github.com/Abhinav061098/movieverse/releases/download/v1.0.0/app-release.apk)
+- **Download**: [MovieVerse APK](https://github.com/Abhinav061098/movieverse/raw/master/releases/movieverse-v1.0.0.apk)
 - **Size**: 55.6 MB
 - **Minimum Android Version**: Android 5.0 (API level 21)
 
