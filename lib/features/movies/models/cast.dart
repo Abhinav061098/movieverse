@@ -14,6 +14,8 @@ class Cast {
   final String? birthday;
   @JsonKey(name: 'place_of_birth')
   final String? placeOfBirth;
+  @JsonKey(name: 'known_for_department')
+  final String? knownForDepartment;
   final List<Movie>? movies;
   final List<TvShow>? tvShows;
   @JsonKey(name: 'external_ids')
@@ -26,6 +28,7 @@ class Cast {
     this.biography,
     this.birthday,
     this.placeOfBirth,
+    this.knownForDepartment,
     this.movies,
     this.tvShows,
     this.externalIds,
@@ -52,6 +55,7 @@ class Cast {
       biography: json['biography'],
       birthday: json['birthday'],
       placeOfBirth: json['place_of_birth'],
+      knownForDepartment: json['known_for_department'],
       movies: movies,
       tvShows: tvShows,
       externalIds: json['external_ids'] != null

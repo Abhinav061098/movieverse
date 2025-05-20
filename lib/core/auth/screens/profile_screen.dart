@@ -3,6 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_profile.dart';
 import '../services/user_profile_service.dart';
 import 'package:intl/intl.dart';
+import 'package:movieverse/features/movies/views/widgets/mood_movie_map.dart';
+import 'package:movieverse/features/movies/services/mood_movie_service.dart';
+import 'package:movieverse/core/api/api_client.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,10 +19,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   String? _error;
   final _userProfileService = UserProfileService();
+  late final MoodMovieService _moodMovieService;
 
   @override
   void initState() {
     super.initState();
+    _moodMovieService = MoodMovieService(ApiClient());
     _loadProfile();
   }
 
@@ -163,6 +168,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
+                MoodMovieMap(moodMovieService: _moodMovieService),
               ],
             ),
           ),

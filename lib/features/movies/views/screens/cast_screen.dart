@@ -245,31 +245,72 @@ class _ModernCollapsibleCastViewState
                         children: [
                           Text(
                             cast.name,
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white),
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
+                          if (cast.knownForDepartment != null && infoFade > 0)
+                            Opacity(
+                              opacity: infoFade,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  cast.knownForDepartment!,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[400],
+                                  ),
+                                ),
+                              ),
+                            ),
                           if (cast.birthday != null && infoFade > 0)
                             Opacity(
                               opacity: infoFade,
                               child: Padding(
-                                padding: const EdgeInsets.only(top: 6.0),
-                                child: Text('Born: ${cast.birthday!}',
-                                    style: TextStyle(color: Colors.white70)),
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.cake,
+                                        size: 16, color: Colors.grey[400]),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      cast.birthday!,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[400],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           if (cast.placeOfBirth != null && infoFade > 0)
                             Opacity(
                               opacity: infoFade,
                               child: Padding(
-                                padding: const EdgeInsets.only(top: 2.0),
-                                child: Text('Place: ${cast.placeOfBirth!}',
-                                    style: TextStyle(color: Colors.white70)),
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.location_on,
+                                        size: 16, color: Colors.grey[400]),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        cast.placeOfBirth!,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[400],
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           if (cast.biography != null &&
@@ -278,50 +319,147 @@ class _ModernCollapsibleCastViewState
                             Opacity(
                               opacity: bioFade,
                               child: Padding(
-                                padding: const EdgeInsets.only(top: 10.0),
-                                child: Text(
-                                  cast.biography!,
-                                  maxLines: 4,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                      color: Colors.white.withOpacity(0.92)),
-                                ),
-                              ),
-                            ),
-                          if (cast.externalIds != null && infoFade > 0)
-                            Opacity(
-                              opacity: infoFade,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
+                                padding: const EdgeInsets.only(top: 12.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    if (cast.externalIds?.instagramId != null)
-                                      _buildSocialButton(
-                                        'https://instagram.com/${cast.externalIds!.instagramId}',
-                                        FontAwesomeIcons.instagram,
-                                        const Color(0xFFE1306C),
+                                    Text(
+                                      'Biography',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[300],
                                       ),
-                                    if (cast.externalIds?.twitterId != null)
-                                      _buildSocialButton(
-                                        'https://twitter.com/${cast.externalIds!.twitterId}',
-                                        FontAwesomeIcons.twitter,
-                                        const Color(0xFF1DA1F2),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      cast.biography!,
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white70,
+                                        height: 1.5,
                                       ),
-                                    if (cast.externalIds?.facebookId != null)
-                                      _buildSocialButton(
-                                        'https://facebook.com/${cast.externalIds!.facebookId}',
-                                        Icons.facebook,
-                                        const Color(0xFF4267B2),
-                                      ),
-                                    if (cast.externalIds?.imdbId != null)
-                                      _buildSocialButton(
-                                        'https://imdb.com/name/${cast.externalIds!.imdbId}',
-                                        FontAwesomeIcons.imdb,
-                                        const Color(0xFFF5C518),
+                                    ),
+                                    if (cast.biography!.length > 200)
+                                      TextButton(
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => Dialog(
+                                              backgroundColor: Colors.black87,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(20.0),
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: [
+                                                        Text(
+                                                          'Biography',
+                                                          style: TextStyle(
+                                                            fontSize: 20,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors
+                                                                .grey[300],
+                                                          ),
+                                                        ),
+                                                        IconButton(
+                                                          icon: const Icon(
+                                                              Icons.close,
+                                                              color: Colors
+                                                                  .white70),
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                  context),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 16),
+                                                    Flexible(
+                                                      child:
+                                                          SingleChildScrollView(
+                                                        child: Text(
+                                                          cast.biography!,
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 15,
+                                                            color:
+                                                                Colors.white70,
+                                                            height: 1.6,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: const Size(0, 0),
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        child: Text(
+                                          'Read More',
+                                          style: TextStyle(
+                                            color: Colors.purpleAccent[100],
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
                                       ),
                                   ],
                                 ),
+                              ),
+                            ),
+                          if (cast.externalIds != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  if (cast.externalIds?.instagramId != null)
+                                    _buildSocialButton(
+                                      'https://instagram.com/${cast.externalIds!.instagramId}',
+                                      FontAwesomeIcons.instagram,
+                                      const Color(0xFFE1306C),
+                                    ),
+                                  if (cast.externalIds?.twitterId != null)
+                                    _buildSocialButton(
+                                      'https://twitter.com/${cast.externalIds!.twitterId}',
+                                      FontAwesomeIcons.twitter,
+                                      const Color(0xFF1DA1F2),
+                                    ),
+                                  if (cast.externalIds?.facebookId != null)
+                                    _buildSocialButton(
+                                      'https://facebook.com/${cast.externalIds!.facebookId}',
+                                      Icons.facebook,
+                                      const Color(0xFF4267B2),
+                                    ),
+                                  if (cast.externalIds?.imdbId != null)
+                                    _buildSocialButton(
+                                      'https://imdb.com/name/${cast.externalIds!.imdbId}',
+                                      FontAwesomeIcons.imdb,
+                                      const Color(0xFFF5C518),
+                                    ),
+                                ],
                               ),
                             ),
                         ],
@@ -538,14 +676,6 @@ class _CastMediaGrid extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                item.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, color: Colors.white),
               ),
             ],
           ),

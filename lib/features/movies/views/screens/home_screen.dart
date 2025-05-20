@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:movieverse/features/movies/views/widgets/directors_widget.dart';
+import 'package:movieverse/features/movies/views/widgets/trending_widget.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/movie_view_model.dart';
 import '../../viewmodels/tv_show_view_model.dart';
@@ -14,6 +15,7 @@ import '../screens/watchlist_screen.dart';
 import '../../../../core/auth/screens/profile_screen.dart';
 import '../widgets/shimmer_widgets.dart';
 import '../widgets/mood_movies_widget.dart';
+import '../widgets/popular_people_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -158,6 +160,8 @@ class _HomeScreenState extends State<HomeScreen> {
             else
               const ShimmerMovieOfTheDay(),
             const SizedBox(height: 16),
+            const TrendingWidget(mediaType: 'movie'),
+            const SizedBox(height: 24),
 
             // Genres
             if (movieViewModel.genres.isNotEmpty)
@@ -316,6 +320,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
+            const PopularPeopleWidget(),
+            const SizedBox(height: 16),
             const MoodMoviesWidget(),
 
             const SizedBox(height: 38),
@@ -334,6 +340,8 @@ class _HomeScreenState extends State<HomeScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
+            const TrendingWidget(mediaType: 'tv'),
+            const SizedBox(height: 16),
             // Genres
             if (tvShowViewModel.genres.isNotEmpty)
               GenreChips(

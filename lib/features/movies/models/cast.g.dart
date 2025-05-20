@@ -13,6 +13,7 @@ Cast _$CastFromJson(Map<String, dynamic> json) => Cast(
       biography: json['biography'] as String?,
       birthday: json['birthday'] as String?,
       placeOfBirth: json['place_of_birth'] as String?,
+      knownForDepartment: json['known_for_department'] as String?,
       movies: (json['movies'] as List<dynamic>?)
           ?.map((e) => Movie.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -31,6 +32,7 @@ Map<String, dynamic> _$CastToJson(Cast instance) => <String, dynamic>{
       'biography': instance.biography,
       'birthday': instance.birthday,
       'place_of_birth': instance.placeOfBirth,
+      'known_for_department': instance.knownForDepartment,
       'movies': instance.movies,
       'tvShows': instance.tvShows,
       'external_ids': instance.externalIds,

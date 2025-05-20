@@ -12,6 +12,7 @@ WatchProvider _$WatchProviderFromJson(Map<String, dynamic> json) =>
       name: json['provider_name'] as String,
       logoPath: json['logo_path'] as String?,
       displayPriority: (json['display_priority'] as num).toInt(),
+      link: json['link'] as String?,
     );
 
 Map<String, dynamic> _$WatchProviderToJson(WatchProvider instance) =>
@@ -20,6 +21,7 @@ Map<String, dynamic> _$WatchProviderToJson(WatchProvider instance) =>
       'provider_name': instance.name,
       'logo_path': instance.logoPath,
       'display_priority': instance.displayPriority,
+      'link': instance.link,
     };
 
 WatchProviders _$WatchProvidersFromJson(Map<String, dynamic> json) =>
