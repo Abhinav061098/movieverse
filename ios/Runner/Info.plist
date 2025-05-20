@@ -28,5 +28,27 @@
 	<string>1:300238429893:ios:2f418455f09e1b9f975aac</string>
 	<key>DATABASE_URL</key>
 	<string>https://movieverse-bd77e-default-rtdb.asia-southeast1.firebasedatabase.app</string>
+	<key>CFBundleDisplayName</key>
+	<string>MovieVerse</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to scan QR codes</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photos access to get profile pictures</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access for video calls</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+	<key>UIStatusBarHidden</key>
+	<false/>
 </dict>
 </plist>
